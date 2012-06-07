@@ -1,0 +1,295 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3C27C4E915813348001FD108 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C27C4E815813348001FD108 /* Cocoa.framework */; };
+		3C27C4F315813348001FD108 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3C27C4F115813348001FD108 /* InfoPlist.strings */; };
+		3C27C4F515813348001FD108 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C4F415813348001FD108 /* main.m */; };
+		3C27C4F915813348001FD108 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 3C27C4F715813348001FD108 /* Credits.rtf */; };
+		3C27C4FC15813348001FD108 /* CSDRAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */; };
+		3C27C4FF15813348001FD108 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C27C4FD15813348001FD108 /* MainMenu.xib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		3C27C4E415813348001FD108 /* Cocoa Radio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cocoa Radio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C27C4E815813348001FD108 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		3C27C4EB15813348001FD108 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		3C27C4EC15813348001FD108 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		3C27C4ED15813348001FD108 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		3C27C4F015813348001FD108 /* Cocoa Radio-Info.plist */ = {isa = PBXFileReference; path = "Cocoa Radio-Info.plist"; sourceTree = "<group>"; };
+		3C27C4F215813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		3C27C4F415813348001FD108 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		3C27C4F615813348001FD108 /* Cocoa Radio-Prefix.pch */ = {isa = PBXFileReference; path = "Cocoa Radio-Prefix.pch"; sourceTree = "<group>"; };
+		3C27C4F815813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
+		3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */ = {isa = PBXFileReference; path = CSDRAppDelegate.h; sourceTree = "<group>"; };
+		3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CSDRAppDelegate.m; sourceTree = "<group>"; };
+		3C27C4FE15813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3C27C4E115813348001FD108 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C27C4E915813348001FD108 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3C27C4D915813348001FD108 = {
+			isa = PBXGroup;
+			children = (
+				3C27C4EE15813348001FD108 /* Cocoa Radio */,
+				3C27C4E715813348001FD108 /* Frameworks */,
+				3C27C4E515813348001FD108 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3C27C4E515813348001FD108 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C4E415813348001FD108 /* Cocoa Radio.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3C27C4E715813348001FD108 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C4E815813348001FD108 /* Cocoa.framework */,
+				3C27C4EA15813348001FD108 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3C27C4EA15813348001FD108 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C4EB15813348001FD108 /* AppKit.framework */,
+				3C27C4EC15813348001FD108 /* CoreData.framework */,
+				3C27C4ED15813348001FD108 /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		3C27C4EE15813348001FD108 /* Cocoa Radio */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */,
+				3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */,
+				3C27C4FD15813348001FD108 /* MainMenu.xib */,
+				3C27C4EF15813348001FD108 /* Supporting Files */,
+			);
+			path = "Cocoa Radio";
+			sourceTree = "<group>";
+		};
+		3C27C4EF15813348001FD108 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C4F015813348001FD108 /* Cocoa Radio-Info.plist */,
+				3C27C4F115813348001FD108 /* InfoPlist.strings */,
+				3C27C4F415813348001FD108 /* main.m */,
+				3C27C4F615813348001FD108 /* Cocoa Radio-Prefix.pch */,
+				3C27C4F715813348001FD108 /* Credits.rtf */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3C27C4E315813348001FD108 /* Cocoa Radio */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3C27C50215813348001FD108 /* Build configuration list for PBXNativeTarget "Cocoa Radio" */;
+			buildPhases = (
+				3C27C4E015813348001FD108 /* Sources */,
+				3C27C4E115813348001FD108 /* Frameworks */,
+				3C27C4E215813348001FD108 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Cocoa Radio";
+			productName = "Cocoa Radio";
+			productReference = 3C27C4E415813348001FD108 /* Cocoa Radio.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3C27C4DB15813348001FD108 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				CLASSPREFIX = CSDR;
+				LastUpgradeCheck = 0430;
+				ORGANIZATIONNAME = "Oregon State University (COAS)";
+			};
+			buildConfigurationList = 3C27C4DE15813348001FD108 /* Build configuration list for PBXProject "Cocoa Radio" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 3C27C4D915813348001FD108;
+			productRefGroup = 3C27C4E515813348001FD108 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3C27C4E315813348001FD108 /* Cocoa Radio */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3C27C4E215813348001FD108 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C27C4F315813348001FD108 /* InfoPlist.strings in Resources */,
+				3C27C4F915813348001FD108 /* Credits.rtf in Resources */,
+				3C27C4FF15813348001FD108 /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3C27C4E015813348001FD108 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C27C4F515813348001FD108 /* main.m in Sources */,
+				3C27C4FC15813348001FD108 /* CSDRAppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		3C27C4F115813348001FD108 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C27C4F215813348001FD108 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		3C27C4F715813348001FD108 /* Credits.rtf */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C27C4F815813348001FD108 /* en */,
+			);
+			name = Credits.rtf;
+			sourceTree = "<group>";
+		};
+		3C27C4FD15813348001FD108 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3C27C4FE15813348001FD108 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		3C27C50015813348001FD108 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		3C27C50115813348001FD108 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		3C27C50315813348001FD108 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Cocoa Radio/Cocoa Radio-Prefix.pch";
+				INFOPLIST_FILE = "Cocoa Radio/Cocoa Radio-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		3C27C50415813348001FD108 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Cocoa Radio/Cocoa Radio-Prefix.pch";
+				INFOPLIST_FILE = "Cocoa Radio/Cocoa Radio-Info.plist";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3C27C4DE15813348001FD108 /* Build configuration list for PBXProject "Cocoa Radio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3C27C50015813348001FD108 /* Debug */,
+				3C27C50115813348001FD108 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3C27C50215813348001FD108 /* Build configuration list for PBXNativeTarget "Cocoa Radio" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3C27C50315813348001FD108 /* Debug */,
+				3C27C50415813348001FD108 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3C27C4DB15813348001FD108 /* Project object */;
+}
