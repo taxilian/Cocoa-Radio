@@ -13,7 +13,38 @@
 		3C27C4F915813348001FD108 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 3C27C4F715813348001FD108 /* Credits.rtf */; };
 		3C27C4FC15813348001FD108 /* CSDRAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */; };
 		3C27C4FF15813348001FD108 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C27C4FD15813348001FD108 /* MainMenu.xib */; };
+		3C27C50E15813367001FD108 /* rtl-sdr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C27C50D15813360001FD108 /* rtl-sdr.framework */; };
+		3C27C51915816B26001FD108 /* OpenGLController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C51815816B26001FD108 /* OpenGLController.m */; };
+		3C27C51D15816B48001FD108 /* CSDRWaterfallView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C51C15816B48001FD108 /* CSDRWaterfallView.m */; };
+		3C27C5201581763E001FD108 /* OpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C51F1581763E001FD108 /* OpenGLView.m */; };
+		3C27C52215817A16001FD108 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C27C52115817A16001FD108 /* OpenGL.framework */; };
+		3C2E3DCF1582C4C3003BB124 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */; };
+		3C5C0ED715898E5D00A2EB52 /* rtl-sdr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C27C50D15813360001FD108 /* rtl-sdr.framework */; };
+		3C5C0EE515899F0800A2EB52 /* CSDRSpectrumView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3C27C50C15813360001FD108 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3C27C50515813360001FD108 /* rtl-sdr.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 3C159966154DAEB00085A804;
+			remoteInfo = "rtl-sdr";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3C5C0ED615898DD400A2EB52 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				3C5C0ED715898E5D00A2EB52 /* rtl-sdr.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		3C27C4E415813348001FD108 /* Cocoa Radio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cocoa Radio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -21,14 +52,26 @@
 		3C27C4EB15813348001FD108 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		3C27C4EC15813348001FD108 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		3C27C4ED15813348001FD108 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		3C27C4F015813348001FD108 /* Cocoa Radio-Info.plist */ = {isa = PBXFileReference; path = "Cocoa Radio-Info.plist"; sourceTree = "<group>"; };
+		3C27C4F015813348001FD108 /* Cocoa Radio-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Cocoa Radio-Info.plist"; sourceTree = "<group>"; };
 		3C27C4F215813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		3C27C4F415813348001FD108 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		3C27C4F615813348001FD108 /* Cocoa Radio-Prefix.pch */ = {isa = PBXFileReference; path = "Cocoa Radio-Prefix.pch"; sourceTree = "<group>"; };
+		3C27C4F615813348001FD108 /* Cocoa Radio-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Cocoa Radio-Prefix.pch"; sourceTree = "<group>"; };
 		3C27C4F815813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */ = {isa = PBXFileReference; path = CSDRAppDelegate.h; sourceTree = "<group>"; };
+		3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSDRAppDelegate.h; sourceTree = "<group>"; };
 		3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CSDRAppDelegate.m; sourceTree = "<group>"; };
 		3C27C4FE15813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		3C27C50515813360001FD108 /* rtl-sdr.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "rtl-sdr.xcodeproj"; path = "../Cocoa-rtl-sdr/rtl-sdr/rtl-sdr.xcodeproj"; sourceTree = "<group>"; };
+		3C27C50F158153B5001FD108 /* Cocoa Radio.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Cocoa Radio.entitlements"; sourceTree = "<group>"; };
+		3C27C51715816B26001FD108 /* OpenGLController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGLController.h; sourceTree = "<group>"; };
+		3C27C51815816B26001FD108 /* OpenGLController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenGLController.m; sourceTree = "<group>"; };
+		3C27C51B15816B48001FD108 /* CSDRWaterfallView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRWaterfallView.h; sourceTree = "<group>"; };
+		3C27C51C15816B48001FD108 /* CSDRWaterfallView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRWaterfallView.m; sourceTree = "<group>"; };
+		3C27C51E1581763E001FD108 /* OpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGLView.h; sourceTree = "<group>"; };
+		3C27C51F1581763E001FD108 /* OpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenGLView.m; sourceTree = "<group>"; };
+		3C27C52115817A16001FD108 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		3C5C0EE315899F0800A2EB52 /* CSDRSpectrumView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRSpectrumView.h; sourceTree = "<group>"; };
+		3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRSpectrumView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,7 +79,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C2E3DCF1582C4C3003BB124 /* Accelerate.framework in Frameworks */,
+				3C27C52215817A16001FD108 /* OpenGL.framework in Frameworks */,
 				3C27C4E915813348001FD108 /* Cocoa.framework in Frameworks */,
+				3C27C50E15813367001FD108 /* rtl-sdr.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,6 +92,7 @@
 		3C27C4D915813348001FD108 = {
 			isa = PBXGroup;
 			children = (
+				3C27C50515813360001FD108 /* rtl-sdr.xcodeproj */,
 				3C27C4EE15813348001FD108 /* Cocoa Radio */,
 				3C27C4E715813348001FD108 /* Frameworks */,
 				3C27C4E515813348001FD108 /* Products */,
@@ -63,6 +110,8 @@
 		3C27C4E715813348001FD108 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */,
+				3C27C52115817A16001FD108 /* OpenGL.framework */,
 				3C27C4E815813348001FD108 /* Cocoa.framework */,
 				3C27C4EA15813348001FD108 /* Other Frameworks */,
 			);
@@ -82,6 +131,8 @@
 		3C27C4EE15813348001FD108 /* Cocoa Radio */ = {
 			isa = PBXGroup;
 			children = (
+				3C27C51A15816B2A001FD108 /* Views */,
+				3C27C50F158153B5001FD108 /* Cocoa Radio.entitlements */,
 				3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */,
 				3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */,
 				3C27C4FD15813348001FD108 /* MainMenu.xib */,
@@ -102,6 +153,37 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		3C27C50615813360001FD108 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C50D15813360001FD108 /* rtl-sdr.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3C27C51A15816B2A001FD108 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C52315817A5B001FD108 /* OpenGL */,
+				3C5C0EE315899F0800A2EB52 /* CSDRSpectrumView.h */,
+				3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */,
+				3C27C51B15816B48001FD108 /* CSDRWaterfallView.h */,
+				3C27C51C15816B48001FD108 /* CSDRWaterfallView.m */,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
+		3C27C52315817A5B001FD108 /* OpenGL */ = {
+			isa = PBXGroup;
+			children = (
+				3C27C51E1581763E001FD108 /* OpenGLView.h */,
+				3C27C51F1581763E001FD108 /* OpenGLView.m */,
+				3C27C51715816B26001FD108 /* OpenGLController.h */,
+				3C27C51815816B26001FD108 /* OpenGLController.m */,
+			);
+			name = OpenGL;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -112,6 +194,7 @@
 				3C27C4E015813348001FD108 /* Sources */,
 				3C27C4E115813348001FD108 /* Frameworks */,
 				3C27C4E215813348001FD108 /* Resources */,
+				3C5C0ED615898DD400A2EB52 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -129,7 +212,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = CSDR;
-				LastUpgradeCheck = 0430;
+				LastUpgradeCheck = 0450;
 				ORGANIZATIONNAME = "Oregon State University (COAS)";
 			};
 			buildConfigurationList = 3C27C4DE15813348001FD108 /* Build configuration list for PBXProject "Cocoa Radio" */;
@@ -142,12 +225,28 @@
 			mainGroup = 3C27C4D915813348001FD108;
 			productRefGroup = 3C27C4E515813348001FD108 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 3C27C50615813360001FD108 /* Products */;
+					ProjectRef = 3C27C50515813360001FD108 /* rtl-sdr.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				3C27C4E315813348001FD108 /* Cocoa Radio */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		3C27C50D15813360001FD108 /* rtl-sdr.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = "rtl-sdr.framework";
+			remoteRef = 3C27C50C15813360001FD108 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		3C27C4E215813348001FD108 /* Resources */ = {
@@ -169,6 +268,10 @@
 			files = (
 				3C27C4F515813348001FD108 /* main.m in Sources */,
 				3C27C4FC15813348001FD108 /* CSDRAppDelegate.m in Sources */,
+				3C27C51915816B26001FD108 /* OpenGLController.m in Sources */,
+				3C27C51D15816B48001FD108 /* CSDRWaterfallView.m in Sources */,
+				3C27C5201581763E001FD108 /* OpenGLView.m in Sources */,
+				3C5C0EE515899F0800A2EB52 /* CSDRSpectrumView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,6 +310,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -222,7 +326,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 			};
@@ -233,6 +337,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -242,7 +347,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -250,6 +355,9 @@
 		3C27C50315813348001FD108 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = "Cocoa Radio/Cocoa Radio.entitlements";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Cocoa Radio/Cocoa Radio-Prefix.pch";
 				INFOPLIST_FILE = "Cocoa Radio/Cocoa Radio-Info.plist";
@@ -261,6 +369,9 @@
 		3C27C50415813348001FD108 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = "Cocoa Radio/Cocoa Radio.entitlements";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Cocoa Radio/Cocoa Radio-Prefix.pch";
 				INFOPLIST_FILE = "Cocoa Radio/Cocoa Radio-Info.plist";
@@ -288,6 +399,7 @@
 				3C27C50415813348001FD108 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
