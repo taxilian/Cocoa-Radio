@@ -27,12 +27,12 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2012 Oregon State University (COAS). All rights reserved.</string>
+	<string>Copyright © 2012 William Dillon, all rights reserved.  Licensed under the GPLv.2 </string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
-	<key>NSSupportsAutomaticGraphicsSwitching</key>
-	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
 </dict>
 </plist>

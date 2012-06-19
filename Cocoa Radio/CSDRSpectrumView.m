@@ -1,8 +1,7 @@
 //
 //  SpectrumView.m
-//  Spectrum Analyzer
 //
-//  Created by William Dillon on 2/7/12.
+//  Created by William Dillon on 6/7/12.
 //  Copyright (c) 2012. All rights reserved.
 //
 

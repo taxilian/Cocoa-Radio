@@ -1,10 +1,8 @@
 //
 //  OpenGLController.h
-//  Forest Map NCD
 //
-//  Created by William Dillon on 11/24/06.
-//  Copyright 2006 VIA Computing. All rights reserved.
-//  Permission granted to Oregon State University for all use.
+//  Created by William Dillon on 6/7/12.
+//  Copyright (c) 2012. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
