@@ -38,8 +38,10 @@
 
 // UI IBActions and Events
 - (IBAction)updateData:(id)sender;
+
 - (void)mouseDownLocation:(NSPoint)location Flags:(NSUInteger)modifierFlags;
 - (void)mouseDraggedLocation:(NSPoint)location Flags:(NSUInteger)modifierFlags;
+
 - (void)scrollWheel:(NSEvent *)theEvent;
 
 // Setters
@@ -51,5 +53,9 @@
 - (void)initGL;
 - (void)reshape:(NSRect)rect;
 - (void)draw;
+
+// Method for sharing this context with another controller
+- (void)shareContextWithController:(OpenGLController *)controller;
+
 
 @end

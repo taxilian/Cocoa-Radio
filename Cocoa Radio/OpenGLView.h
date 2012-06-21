@@ -19,6 +19,6 @@
 	bool initialized;
 }
 
-@property (readonly) NSOpenGLContext *glContext;
+@property (readwrite) NSOpenGLContext *glContext;
 
 @end

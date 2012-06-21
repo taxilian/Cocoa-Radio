@@ -48,6 +48,19 @@
 	return self;
 }
 
+- (NSOpenGLContext *)glContext
+{
+    return glContext;
+}
+
+- (void)setGlContext:(NSOpenGLContext *)newGlContext
+{
+    // set the context to the superclass
+    glContext = newGlContext;
+    [super setOpenGLContext:glContext];
+    [glContext setView:self];
+}
+
 #pragma mark -
 #pragma mark Application Specific Initialization
 - (void)prepare

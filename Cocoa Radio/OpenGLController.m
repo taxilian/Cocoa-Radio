@@ -11,6 +11,8 @@
 
 @implementation OpenGLController
 
+@synthesize openGLView;
+
 - (void)awakeFromNib
 {
 	// Set camera transforms to some reasonable value
@@ -22,7 +24,8 @@
 {
 	NSLog(@"Creating a null pixel format: Probably not desired");
 	
-    NSOpenGLPixelFormatAttribute attributes [] = { (NSOpenGLPixelFormatAttribute)nil };
+    NSOpenGLPixelFormatAttribute attributes [] = {
+        (NSOpenGLPixelFormatAttribute)nil };
 	
     return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
@@ -59,6 +62,18 @@
 //	[trackBall screenResize];
 	
 	return;
+}
+
+- (void)shareContextWithController:(OpenGLController *)controller
+{
+    NSOpenGLContext *givenContext = [[controller openGLView] glContext];
+    Class controllerClass = [controller class];
+    
+    // Create a new context, linked to the given context
+    NSOpenGLContext *newContext = [[NSOpenGLContext alloc] initWithFormat:[controllerClass defaultPixelFormat]
+                                                             shareContext:givenContext];
+    // Set the views context to the new context
+    [openGLView setGlContext:newContext];
 }
 
 #pragma mark -

@@ -10,21 +10,25 @@
 #import "OpenGLView.h"
 
 #define WIDTH  2048
-#define HEIGHT 2048
+#define HEIGHT 4096
 
 @implementation CSDRWaterfallView
 
+@synthesize currentLine;
+@synthesize textureID;
+
 void
-rainbow(unsigned char pixel[4], float value)
+rainbow(float pixel[4], float value)
 {
-	float rgb[3];
-    //	value = value/100.;
+	float rgb[3] = {0., 0., 0.};
     
-	// b -> c
-	rgb[0] = 0.;
-	rgb[1] = 4. * ( value - (0./4.) );
-	rgb[2] = 1.;
-	
+    if (value > 0.) {
+        // b -> c
+        rgb[0] = 0.;
+        rgb[1] = 4. * ( value - (0./4.) );
+        rgb[2] = 1.;
+    }
+    
 	if( value >= .25 ) {
 		// c -> g
 		rgb[0] = 0.;
@@ -52,10 +56,10 @@ rainbow(unsigned char pixel[4], float value)
 		rgb[2] = 1.;
     }
     
-	pixel[0] = rgb[0] * CHAR_MAX;
-	pixel[1] = rgb[1] * CHAR_MAX;
-	pixel[2] = rgb[2] * CHAR_MAX;	
-    pixel[3] = CHAR_MAX;
+	pixel[0] = rgb[0];// * CHAR_MAX;
+	pixel[1] = rgb[1];// * CHAR_MAX;
+	pixel[2] = rgb[2];// * CHAR_MAX;
+    pixel[3] = value;//  * CHAR_MAX;
     
 	return;
 }
@@ -69,6 +73,9 @@ NSOpenGLPixelFormatAttribute attributes [] = {
     NSOpenGLPFADoubleBuffer,
     NSOpenGLPFAAccumSize, 32,
     NSOpenGLPFADepthSize, 16,
+    NSOpenGLPFAMultisample,
+    NSOpenGLPFASampleBuffers, (NSOpenGLPixelFormatAttribute)1,
+    NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute)4,
     (NSOpenGLPixelFormatAttribute)nil };
 
 return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
@@ -82,7 +89,7 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     currentLine = 0;
     
     // Use 4 component texture (RGBA)
-	textureBytes = (unsigned char *)malloc(WIDTH * HEIGHT * 4);
+	textureBytes = malloc(WIDTH * HEIGHT * 4 * sizeof(float));
     
     // Create a slices array
     slices = [[NSMutableArray alloc] initWithCapacity:HEIGHT];
@@ -94,10 +101,144 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
                    name:CocoaSDRFFTDataNotification object:nil];
 }
 
+/*
+- (void)initShaders
+{
+    // Read the shader from file
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSURL *shaderURL = [bundle URLForResource:@"waterfallShader"
+                                withExtension:@"ogl"];
+    
+    NSError *nsError = nil;
+    NSString *shaderString = [NSString stringWithContentsOfURL:shaderURL
+                                                      encoding:NSUTF8StringEncoding
+                                                         error:&nsError];
+    
+    if (shaderString == nil) {
+        if (nsError != nil) {
+            NSLog(@"Unable to open shader file: %@", [nsError localizedDescription]);
+        }
+        
+        return;
+    }
+    
+    const GLchar *shaderText = [shaderString cStringUsingEncoding:NSUTF8StringEncoding];
+    
+    // Create ID for shader
+    shader = glCreateShader(GL_FRAGMENT_SHADER);
+    
+    // Define shader text
+    GLint length = (GLint)strlen(shaderText);
+    glShaderSource(shader, 1, &shaderText, &length);
+    
+    // Compile shader
+    glCompileShader(shader);
+    
+    // Associate shader with program
+    program = glCreateProgram();
+    glAttachShader(program, shader);
+    
+    // Link program
+    glLinkProgram(program);
+    
+    // Validate program
+    glValidateProgram(program);
+    
+    // Check the status of the compile/link
+    GLint logLen = 0;
+    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLen);
+    if(logLen > 0)
+    {
+        // Show any errors as appropriate
+        GLchar *log = malloc(logLen);
+        glGetProgramInfoLog(program, logLen, &logLen, log);
+        fprintf(stderr, "Prog Info Log: %s\n", log);
+        free(log);
+    }
+    
+    glUseProgram(program);
+    // Retrieve all uniform locations that are determined during link phase
+    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniforms);
+    GLint error = glGetError();
+    NSLog(@"Error getting uniform: %d", error);
+
+    numUniforms = [uniforms count];
+    
+    if (uniformIDs == nil) {
+        uniformIDs = malloc(sizeof(GLint) * numUniforms);
+    } else {
+        uniformIDs = realloc(uniformIDs, sizeof(GLint) * numUniforms);
+    }
+    
+    for(int i = 0; i < numUniforms &&
+        i < [uniforms count]; i++)
+    {
+        const GLchar *uniformString = [[uniforms objectAtIndex:i] cStringUsingEncoding:NSUTF8StringEncoding];
+        uniformIDs[i] = glGetUniformLocation(program, uniformString);
+        GLint error = glGetError();
+        NSLog(@"Error getting uniform: %d", error);
+    }
+    
+    // Retrieve all attrib locations that are determined during link phase
+    glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &numAttributes);
+    numAttributes = [attributes count];
+    if (attributeIDs == nil) {
+        attributeIDs = malloc(sizeof(GLint) * numUniforms);
+    } else {
+        attributeIDs = realloc(attributeIDs, sizeof(GLint) * numUniforms);
+    }
+    
+    for(int i = 0; i < numAttributes &&
+        i < [attributes count]; i++)
+    {
+        attributeIDs[i] = glGetAttribLocation(program, [[attributes objectAtIndex:i] cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    glUseProgram(0);
+}
+*/
+
 - (void)initGL
 {
+    initialized = NO;
+    return;
+}
+
+-(void)initialize
+{
+    if (initialized) {
+        return;
+    } else {
+        initialized = YES;
+    }
+
+    // Create arrays for the uniforms and attribute names
+//    uniforms = @[ @"persistance", @"texture" ];
+//    attributes = nil;
+
+//    [self initShaders];
+
+    // Read the shader from file
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSURL *shaderURL = [bundle URLForResource:@"waterfallShader"
+                                withExtension:@"ogl"];
+    
+    NSError *nsError = nil;
+    NSString *shaderString = [NSString stringWithContentsOfURL:shaderURL
+                                                      encoding:NSUTF8StringEncoding
+                                                         error:&nsError];
+    
+    if (shaderString == nil) {
+        if (nsError != nil) {
+            NSLog(@"Unable to open shader file: %@", [nsError localizedDescription]);
+        }
+        
+        return;
+    }
+    shader = [[ShaderProgram alloc] initWithVertex:nil
+                                       andFragment:shaderString];
+    
     // Set black background
-	glClearColor(1.0, 0.0, 0.0, 1.0);
+	glClearColor(0., 0., 0., 1.);
 	
     // Set viewing mode
 	glMatrixMode(GL_PROJECTION);
@@ -121,25 +262,29 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     
     // Set texturing parameters
 	glBindTexture(  GL_TEXTURE_2D, textureID );
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR  );
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR  );
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR  );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR  );
     
-    unsigned char *blankImage = malloc(sizeof(unsigned int) * 4 * WIDTH * HEIGHT);
+    unsigned char *blankImage = malloc(sizeof(float) * 4 * WIDTH * HEIGHT);
 //    bzero(blankImage, sizeof(blankImage));
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
-            blankImage[i*WIDTH*4 + j*4 + 1] = i*255 / HEIGHT;
-            blankImage[i*WIDTH*4 + j*4 + 2] = j*255 / WIDTH;
-            blankImage[i*WIDTH*4 + j*4 + 3] = 255;
-            blankImage[i*WIDTH*4 + j*4 + 4] = 255;
+            // Color cube
+            blankImage[i*WIDTH*4 + j*4 + 1] = i;//*255 / HEIGHT;
+            blankImage[i*WIDTH*4 + j*4 + 2] = j;//*255 / WIDTH;
+            blankImage[i*WIDTH*4 + j*4 + 3] = 1.;//*255;
+            blankImage[i*WIDTH*4 + j*4 + 4] = 1.;//*255;
+
+            // Black
+//            blankImage[i*WIDTH*4 + j*4 + 1] = 0;
+//            blankImage[i*WIDTH*4 + j*4 + 2] = 0;
+//            blankImage[i*WIDTH*4 + j*4 + 3] = 0;
         }
     }
     
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, blankImage);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, blankImage);
     free(blankImage);
     
     glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
@@ -216,10 +361,14 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 
 - (void)draw
 {
-//    glClearColor(0., 0., 0., 1.);
 //    glClear(GL_COLOR_BUFFER_BIT);
-//    return;
 
+    if (!initialized) {
+        return;
+    }
+
+    glBindTexture( GL_TEXTURE_2D, textureID );
+    
     if (newSlice) {
         if (currentLine == HEIGHT) {
             currentLine = 0;
@@ -228,7 +377,7 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
         }
         
         const float *rawBuffer = [newSlice bytes];
-        unsigned char *pixels = malloc(sizeof(unsigned char) * WIDTH * 4);
+        float *pixels = malloc(sizeof(float) * WIDTH * 4);
         
         float bottomValue = [[self appDelegate] bottomValue];
         float range = [[self appDelegate] range];
@@ -236,22 +385,34 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
         for (int i = 0; i < WIDTH; i++) {
             float zeroCorrected = rawBuffer[i] - bottomValue;
             float scaled = zeroCorrected / range;
-
+            
             rainbow(&pixels[i*4], scaled);
+            pixels[i*4 + 3] = rawBuffer[i];
         }
         
         // Replace the oldest line in the texture
-        glBindTexture( GL_TEXTURE_2D, textureID );
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, currentLine, WIDTH, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        glBindTexture( GL_TEXTURE_2D, 0 );
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, currentLine, WIDTH, 1, GL_RGBA, GL_FLOAT, pixels);
         
         free(pixels);
         newSlice = nil;
     }
+
+    [shader bind];
+
+    // Set the uniforms
+    [shader setIntValue:3
+             forUniform:@"persistance"];
+    [shader setIntValue:currentLine
+             forUniform:@"currentLine"];
+
+    [shader setFloatValue:[[self appDelegate] bottomValue]
+               forUniform:@"bottomValue"];
+
+    [shader setFloatValue:[[self appDelegate] range]
+               forUniform:@"range"];
     
-    glBindTexture( GL_TEXTURE_2D, textureID );
-	glBegin( GL_QUADS ); {
-		glColor3f( 1., 0., 0. );
+    glBegin( GL_QUADS ); {
+		glColor3f( 0., 1., 0. );
 
         double top = (double)currentLine / (double)HEIGHT;
         double bot = top + 1.;
@@ -269,15 +430,16 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 		glVertex2f(   1.,  -1.);
 	} glEnd();
     
+    [shader unBind];
     glBindTexture( GL_TEXTURE_2D, 0 );
 	
-//	glBegin( GL_LINES ); {
-//		glColor3f( 1., 0., 0. );
-//		glVertex2f( sliderValue, -1);
-//		glVertex2f( sliderValue,  1);
-//	} glEnd();
+	glBegin( GL_LINES ); {
+		glColor3f( 1., 0., 0. );
+		glVertex2f( [self sliderValue], -1);
+		glVertex2f( [self sliderValue],  1);
+	} glEnd();
     
-	glFlush();
+    glFlush();
 }
 
 #pragma mark
@@ -290,8 +452,29 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 	return;
 }
 
+- (void)mouseDownLocation:(NSPoint)location Flags:(NSUInteger)modifierFlags
+{
+    // A right-mouse click is interpreted as a "pan" command
+    // useful for changing the tuning of the device, while tracking
+    // with the LO.  It is HIGHLY likely that the audio will skip
+    
+    // A left-mouse click is a re-tuning of the LO according to the
+    // location of the click.
+    float width = [openGLView bounds].size.width;
+    float normalized = location.x / width;
+    [self setSliderValue:(normalized * 2) - 1];
+}
+
 - (void)mouseDraggedLocation:(NSPoint)location Flags:(NSUInteger)modifierFlags
 {
+
+    
+    
+    float width = [openGLView bounds].size.width;
+    float normalized = location.x / width;
+    //    float LO = (normalized * [self sampleRate]) - ([self sampleRate] / 2);    
+    [self setSliderValue:(normalized * 2) - 1];
+
     return;
 }
 

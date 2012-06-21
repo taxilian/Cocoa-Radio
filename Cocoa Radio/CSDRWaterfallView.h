@@ -9,18 +9,34 @@
 #import <Cocoa/Cocoa.h>
 #import "OpenGLController.h"
 #import "CSDRAppDelegate.h"
+#import "ShaderProgram.h"
 
 @interface CSDRWaterfallView : OpenGLController
 {
+    bool initialized;
+    
     // This value sets the location of the line for current tuning
 	float sliderValue;
-	
+	float sampleRate;
+    
     // These ivars maintain OpenGL state
 	bool textureCurrent;
 	unsigned int textureID;
 	unsigned char *textureBytes;
     unsigned int currentLine;
+
+    ShaderProgram *shader;
     
+//    GLuint program;
+//    GLuint shader;
+//    GLint numUniforms;
+//    GLint *uniformIDs;
+//    NSArray *uniforms;
+    
+//    GLint numAttributes;
+//    GLint *attributeIDs;
+//    NSArray *attributes;
+
     NSData *newSlice;
     
     // This array contains the last spectrum slices
@@ -29,8 +45,15 @@
 }
 
 @property (readwrite) IBOutlet CSDRAppDelegate *appDelegate;
+@property (readwrite) float sliderValue;
+@property (readwrite) float sampleRate;
+
+@property (readonly) unsigned int textureID;
+@property (readonly) unsigned int currentLine;
 
 - (IBAction) sliderUpdate:(id)sender;
+
+- (void)initialize;
 
 - (void)updateData:(id)data;
 - (void)fftNotification:(NSNotificationCenter *)notification;

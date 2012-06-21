@@ -7,16 +7,22 @@
 
 #import <Cocoa/Cocoa.h>
 #import "CSDRAppDelegate.h"
+#import "OpenGLController.h"
+#import "ShaderProgram.h"
 
 @class Document;
 @class SpectrumController;
 
-@interface CSDRSpectrumView : NSView
+@interface CSDRSpectrumView : OpenGLController
 {
     @private
+    bool initialized;
     
     // Cached value
     NSSize nativePixelsInGraph;
+    
+    GLint textureID;
+    ShaderProgram *shader;
     
     // Current FFT Data
     NSData *fftData;
@@ -28,5 +34,7 @@
 @property(readonly) NSSize nativePixelsInGraph;
 
 @property (readwrite) IBOutlet CSDRAppDelegate *appDelegate;
+
+- (void)initialize;
 
 @end

@@ -7,13 +7,34 @@
 
 #import "CSDRSpectrumView.h"
 #import "CSDRAppDelegate.h"
+#import "OpenGLView.h"
+#import "OpenGLController.h"
+#import "CSDRWaterfallView.h"
 
 #define WIDTH  2048
-#define HEIGHT 2048
+#define HEIGHT 4096
+
+#define H_GRID 10
+#define V_GRID 10
 
 @implementation CSDRSpectrumView
 
-@synthesize nativePixelsInGraph;
+#pragma mark -
+#pragma mark Init and bookkeeping methods
++ (NSOpenGLPixelFormat *)defaultPixelFormat
+{
+    NSOpenGLPixelFormatAttribute attributes [] = {
+        NSOpenGLPFAWindow,
+        NSOpenGLPFADoubleBuffer,
+        NSOpenGLPFAAccumSize, 32,
+        NSOpenGLPFADepthSize, 16,
+        NSOpenGLPFAMultisample,
+        NSOpenGLPFASampleBuffers, (NSOpenGLPixelFormatAttribute)1,
+        NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute)4,
+        (NSOpenGLPixelFormatAttribute)nil };
+    
+    return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+}
 
 // This method determines the location of the point in screen space
 // and rounds the value to yield pixel-aligned lines, which are sharp.
@@ -21,7 +42,7 @@
 // of objects that are an odd number of pixels in size, so they fit perfectly.
 - (NSPoint)pixelAlignPoint:(NSPoint)point withSize:(NSSize)size
 {
-    NSSize sizeInPixels = [self convertSizeToBase:size];
+    NSSize sizeInPixels = [openGLView convertSizeToBase:size];
     CGFloat halfWidthInPixels  = sizeInPixels.width * 0.5;
     CGFloat halfHeightInPixels = sizeInPixels.height * 0.5;
     
@@ -41,59 +62,93 @@
     }
     
     // This is the adjustment needed for odd or even sizes
-//    NSPoint adjustment = [self convertPointFromBase:adjustmentInPixels];
+    //    NSPoint adjustment = [self convertPointFromBase:adjustmentInPixels];
     
-    NSPoint basePoint = [self convertPointToBase:point];
+    NSPoint basePoint = [openGLView convertPointToBase:point];
     basePoint.x = round(basePoint.x) + adjustmentInPixels.x;
     basePoint.y = round(basePoint.y) + adjustmentInPixels.y;
     
-    return [self convertPointFromBase:basePoint];
+    return [openGLView convertPointFromBase:basePoint];
 }
 
-- (void)viewBoundsChanged
+- (void)awakeFromNib
 {
-    // Calculate native pixels in graph
-    float borderWidth = 0;
-    NSRect borderRect = NSInsetRect([self bounds],
-                                    borderWidth,
-                                    borderWidth);
+	[super awakeFromNib];
     
-    // Pixel-align the rect
-    borderRect.origin = [self pixelAlignPoint:borderRect.origin
-                                     withSize:NSMakeSize(1., 1.)];    
-    
-    // Assume that points=pixels for now (not true in HiRes mode)
-    nativePixelsInGraph = borderRect.size;
+    // Subscribe to FFT notifications
+    NSNotificationCenter *center;
+    center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self selector:@selector(fftNotification:)
+                   name:CocoaSDRFFTDataNotification object:nil];
 }
 
-- (id)initWithFrame:(NSRect)frame
+- (void)initGL
 {
-    self = [super initWithFrame:frame];
-    if (self) {
+    initialized = NO;
+    shader = nil;
+}
 
-        // Listen to notifications of views frame being resized
-        NSNotificationCenter *center;
-        center = [NSNotificationCenter defaultCenter];
-        [center addObserverForName:NSViewFrameDidChangeNotification
-                            object:nil
-                             queue:[NSOperationQueue mainQueue]
-                        usingBlock:
-         ^(NSNotification *event) {
-             if ([[event object] isEqual:self]) {
-                 [self viewBoundsChanged];
-             }
-         }];
-        
-        [self viewBoundsChanged];
-        
-        // Subscribe to FFT notifications
-        center = [NSNotificationCenter defaultCenter];
-        [center addObserver:self selector:@selector(fftNotification:)
-                       name:CocoaSDRFFTDataNotification object:nil];
-
+-(void)initialize
+{
+    if (initialized) {
+        return;
+    } else {
+        initialized = YES;
     }
+
+// Create the shader program
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSURL *vertURL = [bundle URLForResource:@"spectrumShader" withExtension:@"vert"];
+    NSURL *fragURL = [bundle URLForResource:@"spectrumShader" withExtension:@"frag"];
     
-    return self;
+    NSError *error = nil;
+    NSString *vertString = [NSString stringWithContentsOfURL:vertURL encoding:NSUTF8StringEncoding error:&error];
+    if (vertString == nil) {
+        if (error != nil) {
+            NSLog(@"Unable to open vertex file: %@", [error localizedDescription]);
+        }
+        
+        return;
+    }
+
+    NSString *fragString = [NSString stringWithContentsOfURL:fragURL encoding:NSUTF8StringEncoding error:&error];
+    if (fragString == nil) {
+        if (error != nil) {
+            NSLog(@"Unable to open fragment file: %@", [error localizedDescription]);
+        }
+        
+        return;
+    }
+
+    shader = [[ShaderProgram alloc] initWithVertex:vertString
+                                       andFragment:fragString];
+    
+    // Set RED background
+	glClearColor(1.0, 0.0, 0.0, 1.0);
+	
+    // Set viewing mode
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0., 1., 0., 1., -1., 1.);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+    
+    // Set blending characteristics
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Set line width
+	glLineWidth( 1. );
+
+    // Setup the options
+    glDisable( GL_DEPTH_TEST );
+    glEnable( GL_TEXTURE_2D );
+
+    // Load the texture from the waterfall display
+    textureID = [[[self appDelegate] waterfallView] textureID];
+    glBindTexture( GL_TEXTURE_2D, textureID );
+    glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 #pragma mark -
@@ -103,179 +158,154 @@
 // Each line is at exactly at 10 dB points.
 - (void)drawHorizGridsInRect:(NSRect)rect
 {
-//    float heightPerDiv = rect.size.height / [controller vDevisions];
-    float heightPerDiv = rect.size.height / 10.;
-    NSBezierPath *path = [[NSBezierPath alloc] init];
-    [[NSColor darkGrayColor] set];
-    [path setLineWidth:1.];
-    
-//    for (int i = 0; i < [controller vDevisions]; i++) {
-    for (int i = 0; i < 10.; i++) {
-        NSPoint leftPoint  = NSMakePoint(rect.origin.x,
-                                         i * heightPerDiv + rect.origin.y);
-        NSPoint rightPoint = NSMakePoint(rect.origin.x + rect.size.width,
-                                         i * heightPerDiv + rect.origin.y);
+    NSColor *lineColor = [[NSColor grayColor] colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+    double r, g, b, a;
+    [lineColor getRed:&r green:&g blue:&b alpha:&a];
+
+    for (int i = 0; i < H_GRID; i++) {
+        glBegin(GL_LINES);
+        glColor4d(r, g, b, a);
         
-        leftPoint  = [self pixelAlignPoint:leftPoint  withSize:NSMakeSize(1., 1.)];
-        rightPoint = [self pixelAlignPoint:rightPoint withSize:NSMakeSize(1., 1.)];
+        float y = (1./ (float)H_GRID) * (float)i;
         
-        [path moveToPoint:leftPoint];
-        [path lineToPoint:rightPoint];
+        glVertex2d(0., y);
+        glVertex2d(1., y);
+        
+        glEnd();
     }
-    
-    [path stroke];
 }
 
 - (void)drawVertGridsInRect:(NSRect)rect
 {
-    [[NSColor darkGrayColor] set];
-    NSBezierPath *path = [NSBezierPath bezierPath];
-
-    float deltaPixels = rect.size.width / 10.;
-    for (int i = 1; i < 10; i++) {
-        // iterate through the horizontal rules
-        NSPoint topPoint    = NSMakePoint(i * deltaPixels + rect.origin.x,
-                                          rect.origin.y + rect.size.height);
-        NSPoint bottomPoint = NSMakePoint(i * deltaPixels + rect.origin.x,
-                                          rect.origin.y);
-        
-        // Make the center line a little lower than the bottom line
-        if (i == 5) {
-            bottomPoint.y -= 5.;
-        }
-        
-        topPoint    = [self pixelAlignPoint:topPoint    withSize:NSMakeSize(1., 1.)];
-        bottomPoint = [self pixelAlignPoint:bottomPoint withSize:NSMakeSize(1., 1.)];
-        
-        [path moveToPoint:topPoint];
-        [path lineToPoint:bottomPoint];
-    }
+    NSColor *lineColor = [[NSColor grayColor] colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+    double r, g, b, a;
+    [lineColor getRed:&r green:&g blue:&b alpha:&a];
     
-    [path stroke];
+    for (int i = 0; i < V_GRID; i++) {
+        glBegin(GL_LINES);
+        glColor4d(r, g, b, a);
+        
+        float x = (1./ (float)V_GRID) * (float)i;
+        
+        glVertex2d(x, 0.);
+        glVertex2d(x, 1.);
+        
+        glEnd();
+    }
 }
 
 - (void)drawDataInRect:(NSRect)rect
 {
-    // All this stuff doesn't change with the different "modes"
-    int steps = WIDTH;
-    const float *samples = [fftData bytes];
-    
-    float pixelsPerStep = (rect.size.width - 1) / steps;
-    
-    float bottomValue = [[self appDelegate] bottomValue];
-    float range = [[self appDelegate] range];
-    float pixelsPerUnit = rect.size.height / range;
+    // use a yellow line for the spectrum
+    NSColor *lineColor = [[NSColor yellowColor] colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+    double r, g, b, a;
+    [lineColor getRed:&r green:&g blue:&b alpha:&a];
 
+// Because we're using an OpenGL texture for the data content,
+// we can just specify a set of vertices, one per pixel
+// evenly spaced across the view.  In the vertex shader, we'll
+// move those vertices into the appropriate place according to
+// the source data.
+
+    // Clear any errors
+    GLint error = glGetError();
+
+    // Bind the shader
+    [shader bind];
+
+    // Bind the data texture
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Get the current line (most recent) in the texture
+    int currentLine = [[[self appDelegate] waterfallView] currentLine];
     
-    [[NSColor yellowColor] set];
-    NSBezierPath *path = [[NSBezierPath alloc] init];
-    [path setLineWidth:1.];
+    // Set the uniforms
+    [shader setIntValue:3
+             forUniform:@"persistance"];
+
+    [shader setFloatValue:(float)currentLine / (float)HEIGHT
+               forUniform:@"line"];
     
-    // If pixels per step is less than one we're in "oversample" mode
-    // If it's equal when we're in a 1-to-1 mode
-    // If it's more than one we're in undersamples mode
+//    [shader setFloatValue:(float)HEIGHT
+//               forUniform:@"height"];
     
-    // Over sample mode works by finding the high and low values for each pixel
-    // draw a line from the low value to the high at the pixel.  If it works
-    // out that there is only one sample for the pixel.  It is both the high
-    // and the low value.
-    /*
-    if (pixelsPerStep < .99) {
-        bool starting = YES;
-        int lastSample = 0;
+    [shader setFloatValue:[[self appDelegate] bottomValue]
+               forUniform:@"bottomValue"];
+    
+    [shader setFloatValue:[[self appDelegate] range]
+               forUniform:@"range"];
+    
+    [shader setIntValue:0 forUniform:@"texture"];
+    
+    // Check for errors
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        NSLog(@"Got an error from OpenGL: %d", error);
+    }
+
+    // Begin drawing the lines for the spectrum
+    glBegin(GL_LINE_STRIP);
+    glColor4d(r, g, b, a);
+    GLuint width = rect.size.width;
+    for (int i = 0; i < width; i++) {
+        float x = (1. / (float)width) * (float)i;
         
-        // Iterate through the pixels
-        for (int i = 0; i < rect.size.width; i++) {
-            float min =  FLT_MAX;
-            float max = -FLT_MAX;
-            
-            // Accumulate min and maxes for all steps that fall within this pixel
-            NSPoint thisPixel = [self pixelAlignPoint:NSMakePoint(rect.origin.x + i, 0.)
-                                             withSize:NSMakeSize(1., 1.)];
-
-            for (int j = lastSample; j < steps; j++) {
-                // Assume that point = pixels (this is usually true)
-                NSPoint testPixel = NSMakePoint(thisPixel.x + round((j - lastSample)*pixelsPerStep),
-                                                thisPixel.y);
-                
-                // If we've left the pixel, break out and start again
-                if (!NSEqualPoints(thisPixel, testPixel)) {
-                    lastSample = j;
-                    break;
-                }
-                
-                // If the sample is NAN don't count it
-                if (samples[i] == NAN) {
-                    continue;
-                }
-
-                // Collect the minimum and maximum values
-                float magnitude = samples[j];
-                if (max < magnitude) max = magnitude;
-                if (min > magnitude) min = magnitude;
-            }
-            
-        // Draw a line from the minimum to maximum
-            // Minimum pixel
-            float unitSpan = (min - bottomValue) / range;
-            float centeredPixel = unitSpan * (rect.size.height / 2.);
-            float yMin = centeredPixel + rect.origin.y + (rect.size.height / 2.);
-            // Maximum pixel
-            unitSpan = (max - bottomValue) / range;
-            centeredPixel = unitSpan * (rect.size.height / 2.);
-            float yMax = centeredPixel + rect.origin.y + (rect.size.height / 2.);
-            
-            if (starting) {
-                [path moveToPoint:NSMakePoint(thisPixel.x, yMin)];
-                starting = NO;
-            } else {
-                [path lineToPoint:NSMakePoint(thisPixel.x, yMin)];
-            }
-            [path lineToPoint:NSMakePoint(thisPixel.x, yMax)];
-        }
+        // For debugging, we'll set X and Y to the same value
+        // this means we should see a diagonal line
+        glVertex2d(x, x);
     }
-    */
-    if (false)
-        NSLog(@"Do nothing");
+    glEnd();
 
-    // One-to-one mode means that each sample is exactly a single pixel
-    // Undersample mode works the same as one-to-on mode.
-    else {
-        for (int i = 0; i < steps; i++) {
-            // Cycle through the points in the graph converting the dBs to pixels
-            float x = i * pixelsPerStep + rect.origin.x;
-            
-            // If the sample is NAN don't draw it
-            if (samples[i] == NAN) {
-                [path moveToPoint:NSMakePoint(x, rect.origin.y)];
-                continue;
-            }
-            
-            // Set the range of the scale to be 0 < 1
-            // First, move the input by the zero compensation
-            float zeroCorrected = samples[i] - bottomValue;
-            float scaled = zeroCorrected / range;
-            float y = scaled * rect.size.height + rect.origin.y;
-            
-            // Devide the number of steps into the width.
-            // Snap all points to device pixels.
-//            float unitSpan = (samples[i] - bottomValue) / range;
-//            float centeredPixel = unitSpan * (rect.size.height / 2.);
-//            float y = centeredPixel + rect.origin.y + (rect.size.height / 2.);
-            
-            NSPoint point = [self pixelAlignPoint:NSMakePoint(x, y)
-                                         withSize:NSMakeSize(1., 1.)];
-            
-            if (i == 0) {
-                [path moveToPoint:point];
-            } else {
-                [path lineToPoint:point];
-            }
-        }
+    glBindTexture( GL_TEXTURE_2D, 0 );
+    [shader unBind];
+    
+    glFlush();
+}
+
+- (void)draw
+{
+    if (!initialized) {
+        glClear(GL_COLOR_BUFFER_BIT);
+        return;
     }
     
-    [path stroke];
-    path = nil;
+    NSColor *lineColor = [[NSColor blackColor] colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+    double r, g, b, a;
+    [lineColor getRed:&r green:&g blue:&b alpha:&a];
+    r = g = b = 0.;
+    a = 1.;
+    glClearColor(r, g, b, a);
+    //    glColor4d(r, g, b, a);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    //    NSBezierPath *framePath = [NSBezierPath bezierPathWithRect:[openGLView bounds]];
+    //    [framePath fill];
+    
+    float borderWidth = 0;
+    NSRect borderRect = NSInsetRect([openGLView bounds],
+                                    borderWidth,
+                                    borderWidth);
+    
+    // Pixel-align the rect
+    borderRect.origin = [self pixelAlignPoint:borderRect.origin
+                                     withSize:NSMakeSize(1., 1.)];    
+    
+    // Draw the vertical lines
+    [self drawVertGridsInRect:borderRect];
+    
+    // Draw horizontal lines
+    [self drawHorizGridsInRect:borderRect];
+    
+    //    NSBezierPath *borderPath = [NSBezierPath bezierPathWithRect:borderRect];
+    //    [[NSColor whiteColor] set];
+    //    [borderPath stroke];
+    
+    [self drawHorizGridsInRect:borderRect];
+    
+    // Draw the actual data
+    if (fftData != nil) {
+        [self drawDataInRect:borderRect];
+    }
 }
 
 - (void)fftNotification:(NSNotification *)notification
@@ -305,9 +335,9 @@
             imagBuffer[i] = imagData[i + (WIDTH/2)] / 200.;
         }
         
-        for (int i = 0; i <  (WIDTH/2); i++) {
-            realBuffer[i + (WIDTH/2)] = realData[i] / 200.;
-            imagBuffer[i + (WIDTH/2)] = imagData[i] / 200.;
+        for (int i = 0; i < (WIDTH/2); i++) {
+            realBuffer[i +  (WIDTH/2)] = realData[i] / 200.;
+            imagBuffer[i +  (WIDTH/2)] = imagData[i] / 200.;
         }
         
         counter++;
@@ -317,9 +347,9 @@
             imagBuffer[i] += imagData[i + (WIDTH/2)] / 200.;
         }
         
-        for (int i = 0; i <  (WIDTH/2); i++) {
-            realBuffer[i + (WIDTH/2)] += realData[i] / 200.;
-            imagBuffer[i + (WIDTH/2)] += imagData[i] / 200.;
+        for (int i = 0; i < (WIDTH/2); i++) {
+            realBuffer[i +  (WIDTH/2)] += realData[i] / 200.;
+            imagBuffer[i +  (WIDTH/2)] += imagData[i] / 200.;
         }
         
         counter++;
@@ -337,41 +367,7 @@
 
         fftData = magBuffer;
         
-        [self setNeedsDisplay:YES];
-    }
-}
-
-- (void)drawRect:(NSRect)dirtyRect
-{
-    [[NSColor blackColor] set];
-
-    NSBezierPath *framePath = [NSBezierPath bezierPathWithRect:[self bounds]];
-    [framePath fill];
-    
-    float borderWidth = 0;
-    NSRect borderRect = NSInsetRect([self bounds],
-                                    borderWidth,
-                                    borderWidth);
-
-    // Pixel-align the rect
-    borderRect.origin = [self pixelAlignPoint:borderRect.origin
-                                     withSize:NSMakeSize(1., 1.)];    
-    
-    // Draw the vertical lines
-    [self drawVertGridsInRect:borderRect];
-    
-    // Draw horizontal lines
-    [self drawHorizGridsInRect:borderRect];
-    
-    NSBezierPath *borderPath = [NSBezierPath bezierPathWithRect:borderRect];
-    [[NSColor whiteColor] set];
-    [borderPath stroke];
-
-    [self drawHorizGridsInRect:borderRect];
-    
-    // Draw the actual data
-    if (fftData != nil) {
-        [self drawDataInRect:borderRect];
+        [openGLView setNeedsDisplay:YES];
     }
 }
 

@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 
 @class RTLSDRDevice;
+@class CSDRSpectrumView;
+@class CSDRWaterfallView;
 
 #ifndef CSDRAPPDELEGATE_M
 extern NSString *CocoaSDRRawDataNotification;
@@ -22,13 +24,21 @@ extern NSString *CocoaSDRFFTDataNotification;
     NSThread *readThread;
 
     float tuningValue;
+    float loValue;
 }
 
 @property (readwrite) IBOutlet NSWindow *window;
 @property (readwrite) IBOutlet NSTextField *tuningField;
+@property (readwrite) IBOutlet NSTextField *loField;
+
+@property (readwrite) IBOutlet CSDRSpectrumView  *spectrumView;
+@property (readwrite) IBOutlet CSDRWaterfallView *waterfallView;
 
 @property (readwrite) float bottomValue;
 @property (readwrite) float range;
+
+@property (readwrite) float tuningValue;
+@property (readwrite) float loValue;
 
 
 - (NSDictionary *)complexFFTOnDict:(NSDictionary *)inDict;

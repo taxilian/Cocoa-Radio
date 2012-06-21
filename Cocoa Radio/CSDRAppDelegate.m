@@ -12,6 +12,8 @@
 
 #import <rtl-sdr/RTLSDRDevice.h>
 #import <Accelerate/Accelerate.h>
+#import "CSDRSpectrumView.h"
+#import "CSDRWaterfallView.h"
 
 NSString *CocoaSDRRawDataNotification = @"CocoaSDRRawDataNotification";
 NSString *CocoaSDRFFTDataNotification = @"CocoaSDRFFTDataNotification";
@@ -117,7 +119,7 @@ NSString *CocoaSDRFFTDataNotification = @"CocoaSDRFFTDataNotification";
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    tuningValue = 144.370;
+    [self setTuningValue:144.370];
     [self setBottomValue:0.];
     [self setRange:1.];
     
@@ -143,18 +145,38 @@ NSString *CocoaSDRFFTDataNotification = @"CocoaSDRFFTDataNotification";
     [device setSampleRate:2048000];
     [device setCenterFreq:tuningValue];
     
+    [[self waterfallView] setSampleRate:2048000];
+    
     // Create a thread for reading
     readThread = [[NSThread alloc] initWithTarget:self
                                          selector:@selector(readLoop)
                                            object:nil];
     [readThread start];
     
+    // Setup the shared context for the spectrum and waterfall views
+    [[self waterfallView] initialize];
+    [[self spectrumView] shareContextWithController:[self waterfallView]];
+    // Initialize the waterfall view to create the texture
+    // Then the spectrum view
+    [[self spectrumView] initialize];
+    
     return;
 }
 
 - (float)tuningValue
 {
+//    return loValue + [[self waterfallView] tuningValue];
     return tuningValue;
+}
+
+- (float)loValue
+{
+    return loValue;
+}
+
+- (void)setLoValue:(float)loValue
+{
+    return;
 }
 
 - (void)setTuningValue:(float)newTuningValue

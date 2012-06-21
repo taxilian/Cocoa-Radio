@@ -1,0 +1,62 @@
+uniform sampler2D texture;
+
+// Number of frames of persistance (between 2 and 4 is good)
+uniform int currentLine;
+uniform int persistance;
+uniform float bottomValue;
+uniform float range;
+
+vec4
+rainbow(float value)
+{
+	vec4 rgb = vec4(0., 0., 0., 1.);
+    
+    if (value > 0.) {
+        // b -> c
+        rgb.r = 0.;
+        rgb.g = 4. * ( value - (0./4.) );
+        rgb.b = 1.;
+    }
+    
+	if( value >= .25 ) {
+		// c -> g
+		rgb.r = 0.;
+		rgb.g = 1.;
+		rgb.b = 1. - 4. * ( value - (1./4.) );
+	}
+	
+	if( value >= .50 ) {
+		// g -> y
+		rgb.r = 4. * ( value - (2./4.) );
+		rgb.g = 1.;
+		rgb.b = 0.;
+	}
+	
+	if( value >= .75 ) {
+		// y -> r
+		rgb.r = 1.;
+		rgb.g = 1. - 4. * ( value - (3./4.) );
+		rgb.b = 0.;
+	}
+	
+    if (value >= 1.) {
+		rgb.r = 1.;
+		rgb.g = 1.;
+		rgb.b = 1.;
+    }
+    
+	return rgb;
+}
+
+void main()
+{
+    float value = texture2D(texture, gl_TexCoord[0].xy).a;
+    float zeroCorrected = value - bottomValue;
+    float scaled = zeroCorrected / range;
+
+//	gl_FragColor = gl_Color * texture2D(texture, gl_TexCoord[0].xy);
+
+	gl_FragColor   = rainbow(scaled);
+//    gl_FragColor.rgb = vec3(scaled);
+    gl_FragColor.a = 1. / float(persistance);
+}
