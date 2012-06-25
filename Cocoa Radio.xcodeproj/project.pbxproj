@@ -25,7 +25,6 @@
 		3C75F1D415929F990071DE3F /* spectrumShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1D215929F560071DE3F /* spectrumShader.vert */; };
 		3C75F1D615938B860071DE3F /* waterfallShader.ogl in Resources */ = {isa = PBXBuildFile; fileRef = 3C75F1D515938B860071DE3F /* waterfallShader.ogl */; };
 		3C75F1DF159393700071DE3F /* ShaderProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C75F1DE159393700071DE3F /* ShaderProgram.m */; };
-		3C75F1E11593C7A90071DE3F /* spectrumShader.frag in Sources */ = {isa = PBXBuildFile; fileRef = 3C75F1E01593C7A90071DE3F /* spectrumShader.frag */; };
 		3C75F1E21593C88E0071DE3F /* spectrumShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1E01593C7A90071DE3F /* spectrumShader.frag */; };
 		3C75F1E31593C8910071DE3F /* waterfallShader.ogl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1D515938B860071DE3F /* waterfallShader.ogl */; };
 /* End PBXBuildFile section */
@@ -295,7 +294,6 @@
 				3C27C5201581763E001FD108 /* OpenGLView.m in Sources */,
 				3C5C0EE515899F0800A2EB52 /* CSDRSpectrumView.m in Sources */,
 				3C75F1DF159393700071DE3F /* ShaderProgram.m in Sources */,
-				3C75F1E11593C7A90071DE3F /* spectrumShader.frag in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

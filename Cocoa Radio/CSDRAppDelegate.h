@@ -15,6 +15,7 @@
 #ifndef CSDRAPPDELEGATE_M
 extern NSString *CocoaSDRRawDataNotification;
 extern NSString *CocoaSDRFFTDataNotification;
+extern NSString *CocoaSDRBaseBandNotification;
 #endif
 
 @interface CSDRAppDelegate : NSObject <NSApplicationDelegate>
@@ -36,6 +37,7 @@ extern NSString *CocoaSDRFFTDataNotification;
 
 @property (readwrite) float bottomValue;
 @property (readwrite) float range;
+@property (readwrite) float average;
 
 @property (readwrite) float tuningValue;
 @property (readwrite) float loValue;

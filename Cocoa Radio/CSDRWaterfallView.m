@@ -16,6 +16,7 @@
 
 @synthesize currentLine;
 @synthesize textureID;
+@synthesize tuningValue;
 
 void
 rainbow(float pixel[4], float value)
@@ -264,9 +265,9 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 	glBindTexture(  GL_TEXTURE_2D, textureID );
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR  );
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR  );
-    
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST  );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST  );
+
     unsigned char *blankImage = malloc(sizeof(float) * 4 * WIDTH * HEIGHT);
 //    bzero(blankImage, sizeof(blankImage));
     for (int i = 0; i < HEIGHT; i++) {
@@ -347,6 +348,7 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
         for (int i = 0; i < WIDTH; i++) {
             magBytes[i] = sqrtf((realBuffer[i] * realBuffer[i]) +
                                 (imagBuffer[i] * imagBuffer[i]));
+            magBytes[i] = log10f(magBytes[i]);
         }
         
         [self updateData:magBuffer];
@@ -385,7 +387,7 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
         for (int i = 0; i < WIDTH; i++) {
             float zeroCorrected = rawBuffer[i] - bottomValue;
             float scaled = zeroCorrected / range;
-            
+
             rainbow(&pixels[i*4], scaled);
             pixels[i*4 + 3] = rawBuffer[i];
         }
@@ -404,6 +406,9 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
              forUniform:@"persistance"];
     [shader setIntValue:currentLine
              forUniform:@"currentLine"];
+    
+    [shader setIntValue:HEIGHT
+             forUniform:@"height"];
 
     [shader setFloatValue:[[self appDelegate] bottomValue]
                forUniform:@"bottomValue"];
@@ -411,23 +416,28 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     [shader setFloatValue:[[self appDelegate] range]
                forUniform:@"range"];
     
+    [shader setIntValue:[[self appDelegate] average]
+             forUniform:@"average"];
+    
     glBegin( GL_QUADS ); {
 		glColor3f( 0., 1., 0. );
 
-        double top = (double)currentLine / (double)HEIGHT;
-        double bot = top + 1.;
+        float top = (float)currentLine / (float)HEIGHT;
+        float bot = top + 1.;
+        float left = 0.;
+        float right = 1.;
+
+        glTexCoord2d( left,  top );
+		glVertex2f(   -1.,   -1.);
         
-        glTexCoord2d( 0., top );
-		glVertex2f(  -1.,  -1.);
+		glTexCoord2d( left,  bot );
+		glVertex2f(   -1.,   1.);
         
-		glTexCoord2d( 0., bot );
-		glVertex2f(  -1.,   1.);
+		glTexCoord2d( right, bot );
+		glVertex2f(   1.,    1.);
         
-		glTexCoord2d( 1., bot );
-		glVertex2f(   1.,   1.);
-        
-		glTexCoord2d( 1., top );
-		glVertex2f(   1.,  -1.);
+		glTexCoord2d( right, top );
+		glVertex2f(   1.,    -1.);
 	} glEnd();
     
     [shader unBind];
@@ -463,6 +473,16 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     float width = [openGLView bounds].size.width;
     float normalized = location.x / width;
     [self setSliderValue:(normalized * 2) - 1];
+    
+    // Calculate the tuned frequency and send it to the appdelegate
+    float LO = [[self appDelegate] loValue];
+    float tunedFreq = (normalized * [self sampleRate]) - ([self sampleRate] / 2);
+    
+    tuningValue = tunedFreq;
+    
+    tunedFreq += LO;
+    [[self appDelegate] setTuningValue:tunedFreq / 1000000];
+    
 }
 
 - (void)mouseDraggedLocation:(NSPoint)location Flags:(NSUInteger)modifierFlags
@@ -472,8 +492,16 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     
     float width = [openGLView bounds].size.width;
     float normalized = location.x / width;
-    //    float LO = (normalized * [self sampleRate]) - ([self sampleRate] / 2);    
     [self setSliderValue:(normalized * 2) - 1];
+    
+    // Calculate the tuned frequency and send it to the appdelegate
+    float LO = [[self appDelegate] loValue];
+    float tunedFreq = (normalized * [self sampleRate]) - ([self sampleRate] / 2);
+    
+    tuningValue = tunedFreq;
+
+    tunedFreq += LO;
+    [[self appDelegate] setTuningValue:tunedFreq / 1000000];
 
     return;
 }

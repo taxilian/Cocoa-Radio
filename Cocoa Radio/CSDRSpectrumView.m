@@ -223,18 +223,27 @@
     [shader setIntValue:3
              forUniform:@"persistance"];
 
+//    [shader setIntValue:currentLine
+//             forUniform:@"line"];
+
     [shader setFloatValue:(float)currentLine / (float)HEIGHT
                forUniform:@"line"];
     
-//    [shader setFloatValue:(float)HEIGHT
-//               forUniform:@"height"];
-    
+    [shader setIntValue:(float)HEIGHT
+               forUniform:@"height"];
+
+    [shader setIntValue:(float)WIDTH
+             forUniform:@"width"];
+
     [shader setFloatValue:[[self appDelegate] bottomValue]
                forUniform:@"bottomValue"];
     
     [shader setFloatValue:[[self appDelegate] range]
                forUniform:@"range"];
     
+    [shader setIntValue:[[self appDelegate] average]
+             forUniform:@"average"];
+
     [shader setIntValue:0 forUniform:@"texture"];
     
     // Check for errors
@@ -242,7 +251,7 @@
     if (error != GL_NO_ERROR) {
         NSLog(@"Got an error from OpenGL: %d", error);
     }
-
+    
     // Begin drawing the lines for the spectrum
     glBegin(GL_LINE_STRIP);
     glColor4d(r, g, b, a);
@@ -256,7 +265,7 @@
     }
     glEnd();
 
-    glBindTexture( GL_TEXTURE_2D, 0 );
+    glBindTexture( TEXTURE_TYPE, 0 );
     [shader unBind];
     
     glFlush();
@@ -274,12 +283,18 @@
     [lineColor getRed:&r green:&g blue:&b alpha:&a];
     r = g = b = 0.;
     a = 1.;
+
     glClearColor(r, g, b, a);
-    //    glColor4d(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
+//    glClear(GL_COLOR_BUFFER_BIT);
     
-    //    NSBezierPath *framePath = [NSBezierPath bezierPathWithRect:[openGLView bounds]];
-    //    [framePath fill];
+    // Color the background with a semi-opaque rect for persistance
+    glColor4f(0., 0., 0., .125);
+    glBegin(GL_QUADS);
+    glVertex2d(0., 0.);
+    glVertex2d(0., 1.);
+    glVertex2d(1., 1.);
+    glVertex2d(1., 0.);
+    glEnd();
     
     float borderWidth = 0;
     NSRect borderRect = NSInsetRect([openGLView bounds],
@@ -294,12 +309,6 @@
     [self drawVertGridsInRect:borderRect];
     
     // Draw horizontal lines
-    [self drawHorizGridsInRect:borderRect];
-    
-    //    NSBezierPath *borderPath = [NSBezierPath bezierPathWithRect:borderRect];
-    //    [[NSColor whiteColor] set];
-    //    [borderPath stroke];
-    
     [self drawHorizGridsInRect:borderRect];
     
     // Draw the actual data

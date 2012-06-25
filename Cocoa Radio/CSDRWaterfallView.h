@@ -11,12 +11,16 @@
 #import "CSDRAppDelegate.h"
 #import "ShaderProgram.h"
 
+#define TEXTURE_TYPE GL_TEXTURE_2D
+//#define TEXTURE_TYPE GL_TEXTURE_RECTANGLE_ARB
+
 @interface CSDRWaterfallView : OpenGLController
 {
     bool initialized;
     
     // This value sets the location of the line for current tuning
 	float sliderValue;
+    float tuningValue;
 	float sampleRate;
     
     // These ivars maintain OpenGL state
@@ -27,16 +31,6 @@
 
     ShaderProgram *shader;
     
-//    GLuint program;
-//    GLuint shader;
-//    GLint numUniforms;
-//    GLint *uniformIDs;
-//    NSArray *uniforms;
-    
-//    GLint numAttributes;
-//    GLint *attributeIDs;
-//    NSArray *attributes;
-
     NSData *newSlice;
     
     // This array contains the last spectrum slices
@@ -47,6 +41,8 @@
 @property (readwrite) IBOutlet CSDRAppDelegate *appDelegate;
 @property (readwrite) float sliderValue;
 @property (readwrite) float sampleRate;
+
+@property (readwrite) float tuningValue;
 
 @property (readonly) unsigned int textureID;
 @property (readonly) unsigned int currentLine;

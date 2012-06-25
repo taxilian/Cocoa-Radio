@@ -2,6 +2,9 @@ uniform sampler2D texture;
 
 // Number of frames of persistance (between 2 and 4 is good)
 uniform int currentLine;
+uniform int height;
+
+uniform int average;
 uniform int persistance;
 uniform float bottomValue;
 uniform float range;
@@ -48,15 +51,42 @@ rainbow(float value)
 	return rgb;
 }
 
+float getValue(vec2 tex)
+{
+    float value = 0.;
+    float inputY = tex.y;
+    
+    float deltaY = 1. / float(height);
+    
+    int i = 0;
+    for(i = 0; i < average; i++) {
+        // For each sample, look into the past i samples
+        tex.y = inputY - (deltaY * float(i));
+        
+        // Wrap-around the height of the texture
+        tex.y = mod(tex.y, 1.);
+        
+        // Retreive the sample
+        float temp = texture2D(texture, tex).a;
+        
+        // Devide by the number of samples and accumulate
+        value += temp * (1. / float(average));
+    }
+    
+    return value;
+}
+
 void main()
 {
-    float value = texture2D(texture, gl_TexCoord[0].xy).a;
+    // Convert the normalized height coordinate into pixels
+    vec2 tex;
+    tex.x = gl_TexCoord[0].x;
+    tex.y = gl_TexCoord[0].y;
+    
+    float value = getValue(tex);
     float zeroCorrected = value - bottomValue;
     float scaled = zeroCorrected / range;
 
-//	gl_FragColor = gl_Color * texture2D(texture, gl_TexCoord[0].xy);
-
 	gl_FragColor   = rainbow(scaled);
-//    gl_FragColor.rgb = vec3(scaled);
     gl_FragColor.a = 1. / float(persistance);
 }
