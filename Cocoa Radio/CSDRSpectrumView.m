@@ -2,7 +2,7 @@
 //  SpectrumView.m
 //
 //  Created by William Dillon on 6/7/12.
-//  Copyright (c) 2012. All rights reserved.
+//  Copyright (c) 2012. All rights reserved. Licensed under the GPL v.2
 //
 
 #import "CSDRSpectrumView.h"
@@ -86,6 +86,23 @@
 {
     initialized = NO;
     shader = nil;
+
+    // Set viewing mode
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0., 1., 0., 1., -1., 1.);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+    
+    // Set blending characteristics
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Set line width
+	glLineWidth( 1. );
+    
+    // Setup the options
+    glDisable( GL_DEPTH_TEST );
 }
 
 -(void)initialize
@@ -120,12 +137,6 @@
         return;
     }
 
-    shader = [[ShaderProgram alloc] initWithVertex:vertString
-                                       andFragment:fragString];
-    
-    // Set RED background
-	glClearColor(1.0, 0.0, 0.0, 1.0);
-	
     // Set viewing mode
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -139,12 +150,15 @@
     
     // Set line width
 	glLineWidth( 1. );
-
+    
     // Setup the options
     glDisable( GL_DEPTH_TEST );
-    glEnable( GL_TEXTURE_2D );
 
+    shader = [[ShaderProgram alloc] initWithVertex:vertString
+                                       andFragment:fragString];
+    
     // Load the texture from the waterfall display
+    glEnable( GL_TEXTURE_2D );
     textureID = [[[self appDelegate] waterfallView] textureID];
     glBindTexture( GL_TEXTURE_2D, textureID );
     glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
@@ -273,11 +287,6 @@
 
 - (void)draw
 {
-    if (!initialized) {
-        glClear(GL_COLOR_BUFFER_BIT);
-        return;
-    }
-    
     NSColor *lineColor = [[NSColor blackColor] colorUsingColorSpaceName:NSDeviceRGBColorSpace];
     double r, g, b, a;
     [lineColor getRed:&r green:&g blue:&b alpha:&a];
@@ -285,10 +294,16 @@
     a = 1.;
 
     glClearColor(r, g, b, a);
-//    glClear(GL_COLOR_BUFFER_BIT);
-    
+
     // Color the background with a semi-opaque rect for persistance
-    glColor4f(0., 0., 0., .125);
+    if (!initialized) {
+        glClear(GL_COLOR_BUFFER_BIT);
+        // If uninitialized, the rect should be fully opaque
+        glColor4f(0., 0., 0., 1.);
+    } else {
+        glColor4f(0., 0., 0., .0625);
+    }
+
     glBegin(GL_QUADS);
     glVertex2d(0., 0.);
     glVertex2d(0., 1.);
@@ -310,10 +325,12 @@
     
     // Draw horizontal lines
     [self drawHorizGridsInRect:borderRect];
-    
-    // Draw the actual data
-    if (fftData != nil) {
-        [self drawDataInRect:borderRect];
+
+    if (initialized) {
+        // Draw the actual data
+        if (fftData != nil) {
+            [self drawDataInRect:borderRect];
+        }
     }
 }
 
