@@ -3,7 +3,7 @@
 //  HD Audio UI
 //
 //  Created by William Dillon on 6/19/08.
-//  Copyright 2008 Oregon State University. All rights reserved.
+//  Copyright 2008. All rights reserved. Licensed under the GPL v.2
 //
 
 #import <Cocoa/Cocoa.h>
