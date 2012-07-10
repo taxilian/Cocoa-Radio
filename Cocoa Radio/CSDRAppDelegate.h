@@ -3,14 +3,21 @@
 //  Cocoa Radio
 //
 //  Created by William Dillon on 6/7/12.
-//  Copyright (c) 2012). All rights reserved.
+//  Copyright (c) 2012). All rights reserved. Licensed under the GPL v.2
 //
 
 #import <Cocoa/Cocoa.h>
 
 @class RTLSDRDevice;
+
 @class CSDRSpectrumView;
 @class CSDRWaterfallView;
+
+@class CSDRlowPassFloat;
+@class CSDRlowPassComplex;
+
+#import "NetworkServer.h"
+#import "NetworkSession.h"
 
 #ifndef CSDRAPPDELEGATE_M
 extern NSString *CocoaSDRRawDataNotification;
@@ -18,7 +25,7 @@ extern NSString *CocoaSDRFFTDataNotification;
 extern NSString *CocoaSDRBaseBandNotification;
 #endif
 
-@interface CSDRAppDelegate : NSObject <NSApplicationDelegate>
+@interface CSDRAppDelegate : NSObject <NSApplicationDelegate, NetworkServerDelegate, NetworkSessionDelegate>
 {
     RTLSDRDevice *device;
     
@@ -26,6 +33,15 @@ extern NSString *CocoaSDRBaseBandNotification;
 
     float tuningValue;
     float loValue;
+    
+    float _IFbandwidth;
+    float _AFbandwidth;
+    
+    CSDRlowPassComplex *IFFilter;
+    CSDRlowPassFloat *AFFilter;
+    
+    NetworkServer *netServer;
+    NSMutableArray *sessions;
 }
 
 @property (readwrite) IBOutlet NSWindow *window;
@@ -42,6 +58,8 @@ extern NSString *CocoaSDRBaseBandNotification;
 @property (readwrite) float tuningValue;
 @property (readwrite) float loValue;
 
+@property (readwrite) float IFbandwidth;
+@property (readwrite) float AFbandwidth;
 
 - (NSDictionary *)complexFFTOnDict:(NSDictionary *)inDict;
 
