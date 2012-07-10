@@ -3,7 +3,7 @@
 //  Cocoa Radio
 //
 //  Created by William Dillon on 6/7/12.
-//  Copyright (c) 2012. All rights reserved.
+//  Copyright (c) 2012. All rights reserved. Licensed under the GPL v.2
 //
 
 #import "CSDRWaterfallView.h"
@@ -273,10 +273,10 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
             // Color cube
-            blankImage[i*WIDTH*4 + j*4 + 1] = i;//*255 / HEIGHT;
-            blankImage[i*WIDTH*4 + j*4 + 2] = j;//*255 / WIDTH;
+            blankImage[i*WIDTH*4 + j*4 + 0] = i;//*255 / HEIGHT;
+            blankImage[i*WIDTH*4 + j*4 + 1] = j;//*255 / WIDTH;
+            blankImage[i*WIDTH*4 + j*4 + 2] = 1.;//*255;
             blankImage[i*WIDTH*4 + j*4 + 3] = 1.;//*255;
-            blankImage[i*WIDTH*4 + j*4 + 4] = 1.;//*255;
 
             // Black
 //            blankImage[i*WIDTH*4 + j*4 + 1] = 0;
@@ -363,9 +363,10 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 
 - (void)draw
 {
-//    glClear(GL_COLOR_BUFFER_BIT);
 
     if (!initialized) {
+        glClearColor(0., 0., 0., 1.);
+        glClear(GL_COLOR_BUFFER_BIT);
         return;
     }
 
