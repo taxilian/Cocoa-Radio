@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3C0654931599069F001A9CB7 /* downconvert.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C0654921599069F001A9CB7 /* downconvert.m */; };
+		3C0654961599089F001A9CB7 /* lowPassFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C0654951599089F001A9CB7 /* lowPassFilter.m */; };
 		3C27C4E915813348001FD108 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C27C4E815813348001FD108 /* Cocoa.framework */; };
 		3C27C4F315813348001FD108 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3C27C4F115813348001FD108 /* InfoPlist.strings */; };
 		3C27C4F515813348001FD108 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C4F415813348001FD108 /* main.m */; };
@@ -27,6 +29,8 @@
 		3C75F1DF159393700071DE3F /* ShaderProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C75F1DE159393700071DE3F /* ShaderProgram.m */; };
 		3C75F1E21593C88E0071DE3F /* spectrumShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1E01593C7A90071DE3F /* spectrumShader.frag */; };
 		3C75F1E31593C8910071DE3F /* waterfallShader.ogl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1D515938B860071DE3F /* waterfallShader.ogl */; };
+		3C85B57E15A649E300803A7B /* NetworkServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57B15A649E300803A7B /* NetworkServer.m */; };
+		3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57D15A649E300803A7B /* NetworkSession.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +60,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3C0654921599069F001A9CB7 /* downconvert.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = downconvert.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		3C065494159906CF001A9CB7 /* dspRoutines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = dspRoutines.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C0654951599089F001A9CB7 /* lowPassFilter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = lowPassFilter.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C27C4E415813348001FD108 /* Cocoa Radio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Cocoa Radio.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C27C4E815813348001FD108 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		3C27C4EB15813348001FD108 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -63,29 +70,33 @@
 		3C27C4ED15813348001FD108 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		3C27C4F015813348001FD108 /* Cocoa Radio-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Cocoa Radio-Info.plist"; sourceTree = "<group>"; };
 		3C27C4F215813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		3C27C4F415813348001FD108 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		3C27C4F415813348001FD108 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = main.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C27C4F615813348001FD108 /* Cocoa Radio-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Cocoa Radio-Prefix.pch"; sourceTree = "<group>"; };
 		3C27C4F815813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CSDRAppDelegate.h; sourceTree = "<group>"; };
-		3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CSDRAppDelegate.m; sourceTree = "<group>"; };
+		3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = CSDRAppDelegate.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = CSDRAppDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C27C4FE15813348001FD108 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		3C27C50515813360001FD108 /* rtl-sdr.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "rtl-sdr.xcodeproj"; path = "../Cocoa-rtl-sdr/rtl-sdr/rtl-sdr.xcodeproj"; sourceTree = "<group>"; };
 		3C27C50F158153B5001FD108 /* Cocoa Radio.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Cocoa Radio.entitlements"; sourceTree = "<group>"; };
-		3C27C51715816B26001FD108 /* OpenGLController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGLController.h; sourceTree = "<group>"; };
-		3C27C51815816B26001FD108 /* OpenGLController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenGLController.m; sourceTree = "<group>"; };
-		3C27C51B15816B48001FD108 /* CSDRWaterfallView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRWaterfallView.h; sourceTree = "<group>"; };
-		3C27C51C15816B48001FD108 /* CSDRWaterfallView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRWaterfallView.m; sourceTree = "<group>"; };
-		3C27C51E1581763E001FD108 /* OpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenGLView.h; sourceTree = "<group>"; };
-		3C27C51F1581763E001FD108 /* OpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OpenGLView.m; sourceTree = "<group>"; };
+		3C27C51715816B26001FD108 /* OpenGLController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = OpenGLController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C27C51815816B26001FD108 /* OpenGLController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = OpenGLController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		3C27C51B15816B48001FD108 /* CSDRWaterfallView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = CSDRWaterfallView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C27C51C15816B48001FD108 /* CSDRWaterfallView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = CSDRWaterfallView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		3C27C51E1581763E001FD108 /* OpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = OpenGLView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C27C51F1581763E001FD108 /* OpenGLView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = OpenGLView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C27C52115817A16001FD108 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		3C5C0EE315899F0800A2EB52 /* CSDRSpectrumView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRSpectrumView.h; sourceTree = "<group>"; };
-		3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRSpectrumView.m; sourceTree = "<group>"; };
+		3C5C0EE315899F0800A2EB52 /* CSDRSpectrumView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = CSDRSpectrumView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = CSDRSpectrumView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C75F1D215929F560071DE3F /* spectrumShader.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = spectrumShader.vert; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		3C75F1D515938B860071DE3F /* waterfallShader.ogl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = waterfallShader.ogl; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
-		3C75F1DD159393700071DE3F /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShaderProgram.h; sourceTree = "<group>"; };
-		3C75F1DE159393700071DE3F /* ShaderProgram.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ShaderProgram.m; sourceTree = "<group>"; };
+		3C75F1DD159393700071DE3F /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ShaderProgram.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C75F1DE159393700071DE3F /* ShaderProgram.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ShaderProgram.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C75F1E01593C7A90071DE3F /* spectrumShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = spectrumShader.frag; sourceTree = "<group>"; };
+		3C85B57A15A649E300803A7B /* NetworkServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = NetworkServer.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C85B57B15A649E300803A7B /* NetworkServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NetworkServer.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		3C85B57C15A649E300803A7B /* NetworkSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = NetworkSession.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		3C85B57D15A649E300803A7B /* NetworkSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NetworkSession.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +114,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3C06549115990681001A9CB7 /* DSP Routines */ = {
+			isa = PBXGroup;
+			children = (
+				3C0654921599069F001A9CB7 /* downconvert.m */,
+				3C065494159906CF001A9CB7 /* dspRoutines.h */,
+				3C0654951599089F001A9CB7 /* lowPassFilter.m */,
+			);
+			name = "DSP Routines";
+			sourceTree = "<group>";
+		};
 		3C27C4D915813348001FD108 = {
 			isa = PBXGroup;
 			children = (
@@ -145,6 +166,8 @@
 		3C27C4EE15813348001FD108 /* Cocoa Radio */ = {
 			isa = PBXGroup;
 			children = (
+				3C85B57415A632C400803A7B /* Network */,
+				3C06549115990681001A9CB7 /* DSP Routines */,
 				3C27C51A15816B2A001FD108 /* Views */,
 				3C27C50F158153B5001FD108 /* Cocoa Radio.entitlements */,
 				3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */,
@@ -201,6 +224,17 @@
 				3C27C51815816B26001FD108 /* OpenGLController.m */,
 			);
 			name = OpenGL;
+			sourceTree = "<group>";
+		};
+		3C85B57415A632C400803A7B /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				3C85B57A15A649E300803A7B /* NetworkServer.h */,
+				3C85B57B15A649E300803A7B /* NetworkServer.m */,
+				3C85B57C15A649E300803A7B /* NetworkSession.h */,
+				3C85B57D15A649E300803A7B /* NetworkSession.m */,
+			);
+			name = Network;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -294,6 +328,10 @@
 				3C27C5201581763E001FD108 /* OpenGLView.m in Sources */,
 				3C5C0EE515899F0800A2EB52 /* CSDRSpectrumView.m in Sources */,
 				3C75F1DF159393700071DE3F /* ShaderProgram.m in Sources */,
+				3C0654931599069F001A9CB7 /* downconvert.m in Sources */,
+				3C0654961599089F001A9CB7 /* lowPassFilter.m in Sources */,
+				3C85B57E15A649E300803A7B /* NetworkServer.m in Sources */,
+				3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
