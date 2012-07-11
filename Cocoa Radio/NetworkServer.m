@@ -112,7 +112,7 @@
 
 	// Listen for an incoming connection indefinitely 
 	while( true ) {
-		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+//		NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 		networkSession = [self accept];
 		
 		if( networkSession != nil ) {
@@ -128,7 +128,7 @@
 		
 		networkSession = nil;
 
-		[pool drain];
+//		[pool drain];
 	}
 }
 
@@ -183,9 +183,9 @@
                   hostnameString, fileDescriptor);
             
             [networkSession setHostname:hostnameString];
-            [hostnameString release];
+//            [hostnameString release];
             
-            [networkSession autorelease];
+//            [networkSession autorelease];
             return networkSession;
         }
     } while (!error);

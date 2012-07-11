@@ -36,7 +36,7 @@
 		written = read =  0;
 		fileDescriptor = -1;
         
-        hostname = [inHostName retain];
+        hostname = inHostName;
 	} 
     
 	return self;
@@ -105,14 +105,14 @@ error:
 	NSInteger localWritten = 0;
 	NSInteger dataLength;
     
-    [theData retain];
+//    [theData retain];
     const void *bytes = [theData bytes];
     dataLength  = [theData length];
 	
 	if( !connected ) {
 		if( ![self connect] ) {
 			perror("Unable to send, not connected and unable to connect");
-            [theData release];
+//            [theData release];
 			return NO;
 		}
 	}
@@ -132,7 +132,7 @@ error:
                 errno != EAGAIN &&
                 errno != ENOBUFS) {
                 NSLog(@"Unrecoverable error sending data to session %s", strerror(errno));
-                [theData release];
+//                [theData release];
                 [delegate sessionTerminated:self];
                 return NO;
             }
@@ -149,7 +149,7 @@ error:
 		
 	} while( localWritten < dataLength );
 
-	[theData release];
+//	[theData release];
 	return YES;
 }
 
@@ -189,11 +189,11 @@ error:
 	
     if (retval != length) {
         NSLog(@"Unable to complete read.");
-        [tempData release];
+//        [tempData release];
         return nil;
     }
     
-	return [tempData autorelease];
+	return tempData;
 }
 
 - (size_t)bytesWritten
@@ -208,20 +208,12 @@ error:
 
 - (NSString *)hostname
 {
-	NSString *retval = [hostname copy];
-    [retval autorelease];
-    
-    return retval;
+    return [hostname copy];
 }
 
 - (void)setHostname:(NSString *)newHostname
 {
-    if (hostname != nil) {
-        [hostname release];
-    }
-    
 	hostname = newHostname;
-    [hostname retain];
 }
 
 - (void)setDelegate:(id)del
