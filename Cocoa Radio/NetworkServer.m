@@ -176,7 +176,7 @@
                 hostnameString = [[NSString alloc] initWithCString:(*hostptr).h_name
                                                           encoding:NSUTF8StringEncoding];
             } else {
-                hostnameString = [[NSString alloc] initWithString:@"Unknown Client."];
+                hostnameString = @"Unknown Client.";
             }
             
             NSLog(@"New connection successful, to %@ (fd: %d).",
