@@ -34,9 +34,9 @@
 {
 }
 
-+ (size_t)bufferSizeWithQueue:(AudioQueueRef)audioQueue
-                         Desc:(AudioStreamBasicDescription)ASBDescription
-                      Seconds:(Float64)seconds;
+//+ (size_t)bufferSizeWithQueue:(AudioQueueRef)audioQueue
+//                         Desc:(AudioStreamBasicDescription)ASBDescription
+//                      Seconds:(Float64)seconds;
 
 @end
 
@@ -51,13 +51,11 @@ struct AQPlayerState {
     SInt64                         mCurrentPacket;
     UInt32                         mNumPacketsToRead;
     AudioStreamPacketDescription  *mPacketDescs;
-    audioSink                     *audioSink;
+    void                          *context;
 };
 
 @interface audioSink : audioDevice
 {
-    DAGAudioSinkViewController *viewController;
-    
     size_t bufferSize;
     NSMutableArray *bufferFIFO;
     NSCondition *bufferCondition;
@@ -66,7 +64,8 @@ struct AQPlayerState {
     int blocksPerBuffer;
     float bufferDuration;
     
-    struct AQPlayerState state;
+//    struct AQPlayerState state;
+    NSMutableData *playerStateData;
 }
 
 @end

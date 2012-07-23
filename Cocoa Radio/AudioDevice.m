@@ -276,7 +276,7 @@ NSMutableArray *devices;
     }
  
     aqBuffer->mPacketDescriptionCount = 0;
-    aqBuffer->mAudioDataByteSize = bufferSize;
+    aqBuffer->mAudioDataByteSize = (uint32)bufferSize;
 
     NSData *inputData = nil;
     
@@ -308,7 +308,7 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
 {
     struct AQPlayerState *pAqData = (struct AQPlayerState *) aqData;
     
-    audioSink *node = pAqData->audioSink;
+    audioSink *node = (__bridge audioSink *)pAqData->context;
 
     if ([node done]) return;
 
@@ -345,119 +345,117 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
         return YES;
     }
     
-    if ([super prepare]) {
-        // Audio buffering
-        bufferFIFO = [[NSMutableArray alloc] init];
-        bufferCondition = [[NSCondition alloc] init];
+    // Audio buffering
+    bufferFIFO = [[NSMutableArray alloc] init];
+    bufferCondition = [[NSCondition alloc] init];
+    
+    swSampleRate = [[self sampleRate] floatValue];
+    float secondsPerBlock = [[self blockSize] floatValue] / swSampleRate;
+    
+    // The ideal is for about .5 seconds per audio queue buffer
+    // Choose a number of sw blocks that make up this number
+    blocksPerBuffer = floorf(.5 / secondsPerBlock);
+    bufferDuration = secondsPerBlock * blocksPerBuffer;
+    
+//TODO: Decide how to choose the desired device!!
+    NSDictionary *deviceDict = [devices objectAtIndex:0];
+    
+    // Derive the hw sample rate
+    hwSampleRate = 0;
+    swSampleRate = [[self sampleRate] floatValue];
+    float hwSampleRateDecim  = 0;
+    float hwSampleRateInterp = 0;
+    NSArray *sampleRates = [deviceDict objectForKey:audioSourceAvailableSampleRatesKey];
+    for (NSValue *rangeValue in sampleRates) {
+        NSRange range = [rangeValue rangeValue];
         
-        swSampleRate = [[self sampleRate] floatValue];
-        float secondsPerBlock = [[self blockSize] floatValue] / swSampleRate;
-        
-        // The ideal is for about .5 seconds per audio queue buffer
-        // Choose a number of sw blocks that make up this number
-        blocksPerBuffer = floorf(.5 / secondsPerBlock);
-        bufferDuration = secondsPerBlock * blocksPerBuffer;
-        
-        NSDictionary *deviceDict = [viewController getSelectedDevice];
-        
-        // Derive the hw sample rate
-        hwSampleRate = 0;
-        swSampleRate = [[self sampleRate] floatValue];
-        float hwSampleRateDecim  = 0;
-        float hwSampleRateInterp = 0;
-        NSArray *sampleRates = [deviceDict objectForKey:audioSourceAvailableSampleRatesKey];
-        for (NSValue *rangeValue in sampleRates) {
-            NSRange range = [rangeValue rangeValue];
-            
-            // Exact match?
-            if (swSampleRate >= range.location &&
-                swSampleRate <= range.location + range.length) {
-                hwSampleRate = swSampleRate;
-                break;
-            }
-            
-            // Is this the closest decimation rate so far?
-            float maxRate = range.location + range.length;
-            if (maxRate < swSampleRate && maxRate > hwSampleRateDecim) {
-                hwSampleRateDecim = maxRate;
-            }
-            
-            // Is this the closest interpolation rate so far?
-            float minRate = range.location;
-            if (minRate > swSampleRate && minRate < hwSampleRateInterp) {
-                hwSampleRateInterp = minRate;
-            }
+        // Exact match?
+        if (swSampleRate >= range.location &&
+            swSampleRate <= range.location + range.length) {
+            hwSampleRate = swSampleRate;
+            break;
         }
         
-        // If possible, it should be equal to the sw sample rate
-        // If not, choose the next-higher rate and interpolate
-        // Finally, choose the next-slower rate and decimate
-        if (hwSampleRate == 0) {
-            if (hwSampleRateInterp == 0) {
-                hwSampleRate = hwSampleRateDecim;
-            } else {
-                hwSampleRate = hwSampleRateInterp;
-            }
+        // Is this the closest decimation rate so far?
+        float maxRate = range.location + range.length;
+        if (maxRate < swSampleRate && maxRate > hwSampleRateDecim) {
+            hwSampleRateDecim = maxRate;
         }
         
-        OSULogs(LOG_INFO, @"Chose %d as the hardware sample rate.", hwSampleRate);
-        
-        // Keep a self-referential pointer in recorderState
-        state.audioSink = self;
-
-        int channels = 1;
-        // Setup the desired parameters from the Audio Queue
-        state.mDataFormat.mFormatID = kAudioFormatLinearPCM;
-        state.mDataFormat.mSampleRate = hwSampleRate;
-        state.mDataFormat.mChannelsPerFrame = channels;
-        state.mDataFormat.mBitsPerChannel = 8 * sizeof(Float32);
-        state.mDataFormat.mBytesPerPacket = channels * sizeof(Float32);
-        state.mDataFormat.mBytesPerFrame  = channels * sizeof(Float32);
-        state.mDataFormat.mFramesPerPacket = 1;
-        state.mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsPacked;    
-
-        // Get the buffer size
-        bufferSize = [audioSink bufferSizeWithQueue:state.mQueue
-                                                      Desc:state.mDataFormat
-                                                   Seconds:bufferDuration];
-        
-        // Create a block for the callback
-        AudioQueueOutputCallbackBlock callback = ^(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {
-            HandleOutputBuffer(&state, inAQ, inBuffer);};
-        
-        // Create the new Audio Queue
-        OSStatus result = AudioQueueNewOutputWithDispatchQueue(&state.mQueue, &state.mDataFormat, 0,
-                                                               dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-                                                               callback);
-
-        if (result != noErr) {
-            OSULogs(LOG_FAIL,@"Unable to create new input audio queue.");
-            return NO;
+        // Is this the closest interpolation rate so far?
+        float minRate = range.location;
+        if (minRate > swSampleRate && minRate < hwSampleRateInterp) {
+            hwSampleRateInterp = minRate;
         }
-        
-        // Set the device for this audioQueue
-        CFStringRef   deviceUID;
-        deviceUID = (CFStringRef)[deviceDict objectForKey:audioSourceDeviceUIDKey];
-        UInt32 propertySize = sizeof(CFStringRef);
-        result = AudioQueueSetProperty(state.mQueue, 
-                                       kAudioQueueProperty_CurrentDevice, 
-                                       &deviceUID, propertySize);
-        
-        if (result != noErr) {
-            NSLog(@"Unable to set audio queue device to %@", deviceUID);
-            return NO;
-        }
-
-        // Create a set of buffers
-        for (int i = 0; i < kNumberBuffers; ++i) { 
-            AudioQueueAllocateBuffer(state.mQueue, bufferSize, &state.mBuffers[i]);
-        }
-
-        prepared = YES;
-        return YES;
     }
     
-    return NO;
+    // If possible, it should be equal to the sw sample rate
+    // If not, choose the next-higher rate and interpolate
+    // Finally, choose the next-slower rate and decimate
+    if (hwSampleRate == 0) {
+        if (hwSampleRateInterp == 0) {
+            hwSampleRate = hwSampleRateDecim;
+        } else {
+            hwSampleRate = hwSampleRateInterp;
+        }
+    }
+    
+    NSLog(@"Chose %d as the hardware sample rate.", hwSampleRate);
+    
+    // Keep a self-referential pointer in recorderState
+    struct AQPlayerState *state = [playerStateData mutableBytes];
+    state->context = (__bridge void *)self;
+
+    int channels = 1;
+    // Setup the desired parameters from the Audio Queue
+    state->mDataFormat.mFormatID = kAudioFormatLinearPCM;
+    state->mDataFormat.mSampleRate = hwSampleRate;
+    state->mDataFormat.mChannelsPerFrame = channels;
+    state->mDataFormat.mBitsPerChannel = 8 * sizeof(Float32);
+    state->mDataFormat.mBytesPerPacket = channels * sizeof(Float32);
+    state->mDataFormat.mBytesPerFrame  = channels * sizeof(Float32);
+    state->mDataFormat.mFramesPerPacket = 1;
+    state->mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsPacked;    
+
+    // Get the buffer size
+    bufferSize = [audioSink bufferSizeWithQueue:state->mQueue
+                                                  Desc:state->mDataFormat
+                                               Seconds:bufferDuration];
+    
+    // Create a block for the callback
+    AudioQueueOutputCallbackBlock callback = ^(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {
+        HandleOutputBuffer(state, inAQ, inBuffer);};
+    
+    // Create the new Audio Queue
+    OSStatus result = AudioQueueNewOutputWithDispatchQueue(&state->mQueue, &state->mDataFormat, 0,
+                                                           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                                                           callback);
+
+    if (result != noErr) {
+        NSLog(@"Unable to create new input audio queue.");
+        return NO;
+    }
+    
+    // Set the device for this audioQueue
+    CFStringRef   deviceUID;
+    deviceUID = (__bridge CFStringRef)[deviceDict objectForKey:audioSourceDeviceUIDKey];
+    UInt32 propertySize = sizeof(CFStringRef);
+    result = AudioQueueSetProperty(state->mQueue,
+                                   kAudioQueueProperty_CurrentDevice, 
+                                   &deviceUID, propertySize);
+    
+    if (result != noErr) {
+        NSLog(@"Unable to set audio queue device to %@", deviceUID);
+        return NO;
+    }
+
+    // Create a set of buffers
+    for (int i = 0; i < kNumberBuffers; ++i) { 
+        AudioQueueAllocateBuffer(state->mQueue, (UInt32)bufferSize, &state->mBuffers[i]);
+    }
+
+    prepared = YES;
+    return YES;
 }
 
 - (void)stop
@@ -471,27 +469,26 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     if (!prepared) {
         return;
     }
-    
-    [bufferFIFO release];
-    [bufferCondition release];
+
+    bufferFIFO = nil;
+    bufferCondition = nil;
 
     // Stop the queue NOW
-    AudioQueueStop(state.mQueue, YES);
+    struct AQPlayerState *state = [playerStateData mutableBytes];
+    AudioQueueStop(state->mQueue, YES);
     
     // Release buffers
     for (int i = 0; i < kNumberBuffers; ++i) { 
-        AudioQueueFreeBuffer(state.mQueue, state.mBuffers[i]);
+        AudioQueueFreeBuffer(state->mQueue, state->mBuffers[i]);
     }
-    
-    [super unprepare];
     
     prepared = NO;
 }
 
 - (void)run
 {
-    DAGArgument *arg = [arguments objectAtIndex:0];
-    
+    struct AQPlayerState *state = [playerStateData mutableBytes];
+
     // Make sure the node is prepared
     if (!prepared) {
         if ([self prepare] == NO) {
@@ -508,10 +505,8 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
 
             for (int j = 0; j < blocksPerBuffer; j++) {
                 // Get the data
-                NSData *tempData = [arg getData];
+                NSData *tempData = nil;
                 if (tempData == nil) {
-                    [outData release];
-                    [audioBuffers release];
                     done = YES;
                     return;
                 }
@@ -522,22 +517,21 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
 
             // Convert the format and store it
             [bufferFIFO addObject:[self convertFormat:outData]];
-            HandleOutputBuffer(&state, state.mQueue, state.mBuffers[i]);
-            [outData release];
+            HandleOutputBuffer(state, state->mQueue, state->mBuffers[i]);
         }
     }
     
     UInt32 numberPrepared = 0;
-    UInt32 framesToPrime = (bufferSize / state.mDataFormat.mBytesPerFrame) * kNumberBuffers;
-    OSStatus result = AudioQueuePrime(state.mQueue, framesToPrime, &numberPrepared);
+    UInt32 framesToPrime = (UInt32)(bufferSize / state->mDataFormat.mBytesPerFrame) * kNumberBuffers;
+    OSStatus result = AudioQueuePrime(state->mQueue, framesToPrime, &numberPrepared);
     if (result != noErr) {
-        OSULogs(LOG_FAIL, @"Unable to prime the audio queue.");
+        NSLog(@"Unable to prime the audio queue.");
         return;
     } else {
-        OSULogs(LOG_INFO, @"Primed with %d frames.", numberPrepared);
+        NSLog(@"Primed with %d frames.", numberPrepared);
     }
 
-    [audioBuffers release];
+    audioBuffers = nil;
 
     // Pre-fill the buffers with 10 units
     for (int i = 0; i < 10; i++) {
@@ -546,9 +540,8 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
             
             for (int j = 0; j < blocksPerBuffer; j++) {
                 // Get the data
-                NSData *tempData = [arg getData];
+                NSData *tempData = nil;
                 if (tempData == nil) {
-                    [outData release];
                     done = YES;
                     return;
                 }
@@ -559,14 +552,13 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
             
             // Convert the format and store it
             [bufferFIFO addObject:[self convertFormat:outData]];
-            [outData release];
         }
     }
     
     // Start audio
-    result = AudioQueueStart(state.mQueue, NULL);
+    result = AudioQueueStart(state->mQueue, NULL);
     if (result != noErr) {
-        OSULogs(LOG_FAIL, @"Unable to start the audio queue!");
+        NSLog(@"Unable to start the audio queue!");
         return;
     }
     
@@ -575,40 +567,36 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     NSMutableData *outData = [[NSMutableData alloc] initWithLength:bufferSize];
     char *bytes = [outData mutableBytes];
     do {
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-        for (int j = 0; j < blocksPerBuffer; j++) {
-            // Get the data
-            NSData *argData = [arg getData];
-            if (argData == nil) {
-                [outData release];
-                done = YES;
-                return;
+        @autoreleasepool {
+            for (int j = 0; j < blocksPerBuffer; j++) {
+                // Get the data
+                NSData *argData = nil;
+                if (argData == nil) {
+                    done = YES;
+                    return;
+                }
+                
+                unsigned long start = [argData length] * j;
+                memcpy(&bytes[start], [argData bytes], [argData length]);
             }
-
-            int start = [argData length] * j;
-            memcpy(&bytes[start], [argData bytes], [argData length]);
+            
+            // Put in the buffer FIFO
+            [bufferCondition lock];
+            NSData *tempData = [outData copy];
+            
+            // Make sure the buffer isn't too full
+            if ([bufferFIFO count] > 100) {
+                [bufferCondition wait];
+            }
+            
+            // The buffer has space
+            [bufferFIFO addObject:[self convertFormat:tempData]];
+            
+            tempData = nil;
+            [bufferCondition unlock];
+            
         }
-
-        // Put in the buffer FIFO
-        [bufferCondition lock];
-        NSData *tempData = [outData copy];
-        
-        // Make sure the buffer isn't too full
-        if ([bufferFIFO count] > 100) {
-            [bufferCondition wait];
-        }
-        
-        // The buffer has space
-        [bufferFIFO addObject:[self convertFormat:tempData]];
-        if (DAGNODE_AUDIO_BUFFER_FILL_ENABLED()) {
-            DAGNODE_AUDIO_BUFFER_FILL([bufferFIFO count]);}
-
-        [tempData release];
-        [bufferCondition unlock];
-
-        [pool drain];
     } while (!done);
-    [outData release];
 }
 
 @end
