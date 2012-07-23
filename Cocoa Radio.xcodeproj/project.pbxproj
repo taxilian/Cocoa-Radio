@@ -28,6 +28,7 @@
 		3C75F1DF159393700071DE3F /* ShaderProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C75F1DE159393700071DE3F /* ShaderProgram.m */; };
 		3C75F1E21593C88E0071DE3F /* spectrumShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1E01593C7A90071DE3F /* spectrumShader.frag */; };
 		3C75F1E31593C8910071DE3F /* waterfallShader.ogl in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1D515938B860071DE3F /* waterfallShader.ogl */; };
+		3C7CAAEE15BDA04500E78D83 /* AudioDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C7CAAED15BDA04500E78D83 /* AudioDevice.m */; };
 		3C85B57E15A649E300803A7B /* NetworkServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57B15A649E300803A7B /* NetworkServer.m */; };
 		3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57D15A649E300803A7B /* NetworkSession.m */; };
 /* End PBXBuildFile section */
@@ -90,6 +91,8 @@
 		3C75F1DD159393700071DE3F /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ShaderProgram.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		3C75F1DE159393700071DE3F /* ShaderProgram.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ShaderProgram.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C75F1E01593C7A90071DE3F /* spectrumShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = spectrumShader.frag; sourceTree = "<group>"; };
+		3C7CAAEC15BDA04500E78D83 /* AudioDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioDevice.h; sourceTree = "<group>"; };
+		3C7CAAED15BDA04500E78D83 /* AudioDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioDevice.m; sourceTree = "<group>"; };
 		3C85B57A15A649E300803A7B /* NetworkServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = NetworkServer.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		3C85B57B15A649E300803A7B /* NetworkServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NetworkServer.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C85B57C15A649E300803A7B /* NetworkSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = NetworkSession.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -164,6 +167,7 @@
 		3C27C4EE15813348001FD108 /* Cocoa Radio */ = {
 			isa = PBXGroup;
 			children = (
+				3C7CAAEB15BDA01900E78D83 /* Audio */,
 				3C85B57415A632C400803A7B /* Network */,
 				3C06549115990681001A9CB7 /* DSP Routines */,
 				3C27C51A15816B2A001FD108 /* Views */,
@@ -222,6 +226,15 @@
 				3C581AC415B9F5F2009503A8 /* rtl-sdr.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3C7CAAEB15BDA01900E78D83 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				3C7CAAEC15BDA04500E78D83 /* AudioDevice.h */,
+				3C7CAAED15BDA04500E78D83 /* AudioDevice.m */,
+			);
+			name = Audio;
 			sourceTree = "<group>";
 		};
 		3C85B57415A632C400803A7B /* Network */ = {
@@ -330,6 +343,7 @@
 				3C0654961599089F001A9CB7 /* lowPassFilter.m in Sources */,
 				3C85B57E15A649E300803A7B /* NetworkServer.m in Sources */,
 				3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */,
+				3C7CAAEE15BDA04500E78D83 /* AudioDevice.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
