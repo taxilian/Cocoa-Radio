@@ -36,7 +36,7 @@
 		3C7CAB1B15BDC53600E78D83 /* CoreAudioKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C7CAB1915BDC53600E78D83 /* CoreAudioKit.framework */; };
 		3C85B57E15A649E300803A7B /* NetworkServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57B15A649E300803A7B /* NetworkServer.m */; };
 		3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57D15A649E300803A7B /* NetworkSession.m */; };
-		3CAC559015D16A0600FDFF2A /* README in Resources */ = {isa = PBXBuildFile; fileRef = 3CAC558F15D16A0600FDFF2A /* README */; };
+		3CAC559215D16EF100FDFF2A /* README in Resources */ = {isa = PBXBuildFile; fileRef = 3CAC559115D16EF100FDFF2A /* README */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,7 +108,7 @@
 		3C85B57B15A649E300803A7B /* NetworkServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NetworkServer.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C85B57C15A649E300803A7B /* NetworkSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = NetworkSession.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		3C85B57D15A649E300803A7B /* NetworkSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NetworkSession.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		3CAC558F15D16A0600FDFF2A /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
+		3CAC559115D16EF100FDFF2A /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README; path = ../README; sourceTree = "<group>"; };
 		3CFEE8FD15B877220077CF50 /* rtl-sdr.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "rtl-sdr.xcodeproj"; path = "../Softshell/rtl-sdr/rtl-sdr.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -194,7 +194,7 @@
 				3C27C50F158153B5001FD108 /* Cocoa Radio.entitlements */,
 				3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */,
 				3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */,
-				3CAC558F15D16A0600FDFF2A /* README */,
+				3CAC559115D16EF100FDFF2A /* README */,
 				3C48BB4D15C1F17E0047BA39 /* delegateprobes.d */,
 				3C27C4FD15813348001FD108 /* MainMenu.xib */,
 				3C27C4EF15813348001FD108 /* Supporting Files */,
@@ -344,7 +344,7 @@
 				3C27C4FF15813348001FD108 /* MainMenu.xib in Resources */,
 				3C75F1D315929F560071DE3F /* spectrumShader.vert in Resources */,
 				3C75F1D615938B860071DE3F /* waterfallShader.ogl in Resources */,
-				3CAC559015D16A0600FDFF2A /* README in Resources */,
+				3CAC559215D16EF100FDFF2A /* README in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
