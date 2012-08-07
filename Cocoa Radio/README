@@ -1,0 +1,14 @@
+Compilation of this project requires Xcode 4.4 or later.
+
+Assuming that you're using an appropriate version of Xcode,
+make sure that the rtl-sdr project is linked into the project.
+The rtl-sde.xcodeproject file should appear as a folder.  If it
+appears as a file with a red filename, set the path to the xcode
+project file within the rtl-sdr folder.
+
+More information is available in the 'getting started' wiki page
+on github.
+
+https://github.com/hpux735/Cocoa-Radio/wiki/Getting-started
+
+This software is licensed under the GPL v.2 
