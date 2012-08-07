@@ -282,7 +282,7 @@
     glBindTexture( TEXTURE_TYPE, 0 );
     [shader unBind];
     
-    glFlush();
+//    glFlush();
 }
 
 - (void)draw
@@ -336,65 +336,24 @@
 
 - (void)fftNotification:(NSNotification *)notification
 {
-    static int counter = 0;
+    NSDictionary *inData = (NSDictionary *)[notification object];
+    const float *realData = (const float *)[inData[@"real"] bytes];
+    const float *imagData = (const float *)[inData[@"imag"] bytes];
     
-    NSDictionary *fftDataIn = (NSDictionary *)[notification object];
-    const float *realData = (const float *)[fftDataIn[@"real"] bytes];
-    const float *imagData = (const float *)[fftDataIn[@"imag"] bytes];
+    NSMutableData *magBuffer = [[NSMutableData alloc] initWithCapacity:WIDTH * sizeof(float)];
+    float *magBytes = [magBuffer mutableBytes];
     
-    static float realBuffer[WIDTH];
-    static float imagBuffer[WIDTH];
-    
-    // The format of the frequency data is:
-    
-    //  Positive frequencies | Negative frequencies
-    //  [DC][1][2]...[n/2][NY][n/2]...[2][1]  real array
-    //  [DC][1][2]...[n/2][NY][n/2]...[2][1]  imag array
-    
-    // We want the order to be negative frequencies first (descending)
-    // And positive frequencies last (ascending)
-    
-    // Accumulate this data with what came before it, and re-order the values
-    if (counter == 0) {
-        for (int i = 0; i <= (WIDTH/2); i++) {
-            realBuffer[i] = realData[i + (WIDTH/2)] / 200.;
-            imagBuffer[i] = imagData[i + (WIDTH/2)] / 200.;
-        }
-        
-        for (int i = 0; i < (WIDTH/2); i++) {
-            realBuffer[i +  (WIDTH/2)] = realData[i] / 200.;
-            imagBuffer[i +  (WIDTH/2)] = imagData[i] / 200.;
-        }
-        
-        counter++;
-    } else if (counter < 33) {
-        for (int i = 0; i <= (WIDTH/2); i++) {
-            realBuffer[i] += realData[i + (WIDTH/2)] / 200.;
-            imagBuffer[i] += imagData[i + (WIDTH/2)] / 200.;
-        }
-        
-        for (int i = 0; i < (WIDTH/2); i++) {
-            realBuffer[i +  (WIDTH/2)] += realData[i] / 200.;
-            imagBuffer[i +  (WIDTH/2)] += imagData[i] / 200.;
-        }
-        
-        counter++;
-    } else {
-        counter = 0;
-        
-        NSMutableData *magBuffer = [[NSMutableData alloc] initWithCapacity:WIDTH * sizeof(float)];
-        float *magBytes = [magBuffer mutableBytes];
-        
-        // Compute the magnitude of the data
-        for (int i = 0; i < WIDTH; i++) {
-            magBytes[i] = sqrtf((realBuffer[i] * realBuffer[i]) +
-                                (imagBuffer[i] * imagBuffer[i]));
-        }
-
-        fftData = magBuffer;
-        
-        [openGLView setNeedsDisplay:YES];
+    // Compute the magnitude of the data
+    for (int i = 0; i < WIDTH; i++) {
+        magBytes[i] = sqrtf((realData[i] * realData[i]) +
+                            (imagData[i] * imagData[i]));
+        magBytes[i] = log10f(magBytes[i]);
     }
+    
+    // Update the UI
+    fftData = magBuffer;
+    
+    [openGLView setNeedsDisplay:YES];
 }
 
 #pragma mark -

@@ -295,64 +295,22 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 
 - (void)fftNotification:(NSNotification *)notification
 {
-    static int counter = 0;
-
     NSDictionary *fftData = (NSDictionary *)[notification object];
     const float *realData = (const float *)[fftData[@"real"] bytes];
     const float *imagData = (const float *)[fftData[@"imag"] bytes];
 
-    static float realBuffer[WIDTH];
-    static float imagBuffer[WIDTH];
+    NSMutableData *magBuffer = [[NSMutableData alloc] initWithCapacity:WIDTH * sizeof(float)];
+    float *magBytes = [magBuffer mutableBytes];
     
-    // The format of the frequency data is:
-    
-//  Positive frequencies | Negative frequencies
-//  [DC][1][2]...[n/2][NY][n/2]...[2][1]  real array
-//  [DC][1][2]...[n/2][NY][n/2]...[2][1]  imag array
-    
-    // We want the order to be negative frequencies first (descending)
-    // And positive frequencies last (ascending)
-    
-    // Accumulate this data with what came before it, and re-order the values
-    if (counter == 0) {
-        for (int i = 0; i <= (WIDTH/2); i++) {
-            realBuffer[i] = realData[i + (WIDTH/2)] / 200.;
-            imagBuffer[i] = imagData[i + (WIDTH/2)] / 200.;
-        }
-        
-        for (int i = 0; i <  (WIDTH/2); i++) {
-            realBuffer[i + (WIDTH/2)] = realData[i] / 200.;
-            imagBuffer[i + (WIDTH/2)] = imagData[i] / 200.;
-        }
-        
-        counter++;
-    } else if (counter < 33) {
-        for (int i = 0; i <= (WIDTH/2); i++) {
-            realBuffer[i] += realData[i + (WIDTH/2)] / 200.;
-            imagBuffer[i] += imagData[i + (WIDTH/2)] / 200.;
-        }
-        
-        for (int i = 0; i <  (WIDTH/2); i++) {
-            realBuffer[i + (WIDTH/2)] += realData[i] / 200.;
-            imagBuffer[i + (WIDTH/2)] += imagData[i] / 200.;
-        }
-
-        counter++;
-    } else {
-        counter = 0;
-        
-        NSMutableData *magBuffer = [[NSMutableData alloc] initWithCapacity:WIDTH * sizeof(float)];
-        float *magBytes = [magBuffer mutableBytes];
-        
-        // Compute the magnitude of the data
-        for (int i = 0; i < WIDTH; i++) {
-            magBytes[i] = sqrtf((realBuffer[i] * realBuffer[i]) +
-                                (imagBuffer[i] * imagBuffer[i]));
-            magBytes[i] = log10f(magBytes[i]);
-        }
-        
-        [self updateData:magBuffer];
+    // Compute the magnitude of the data
+    for (int i = 0; i < WIDTH; i++) {
+        magBytes[i] = sqrtf((realData[i] * realData[i]) +
+                            (imagData[i] * imagData[i]));
+        magBytes[i] = log10f(magBytes[i]);
     }
+    
+    // Update the UI
+    [self updateData:magBuffer];
 }
 
 - (void)updateData:(id)data
@@ -450,7 +408,7 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 		glVertex2f( [self sliderValue],  1);
 	} glEnd();
     
-    glFlush();
+//    glFlush();
 }
 
 #pragma mark
