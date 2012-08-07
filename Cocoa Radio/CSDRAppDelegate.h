@@ -42,6 +42,10 @@ extern NSString *CocoaSDRBaseBandNotification;
     
     NetworkServer *netServer;
     NSMutableArray *sessions;
+    
+    NSDictionary *fftBufferDict;
+    
+    dispatch_queue_t processQueue;
 }
 
 @property (readwrite) IBOutlet NSWindow *window;
