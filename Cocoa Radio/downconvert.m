@@ -36,6 +36,53 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
 	return conversion * (double) difference;
 }
 
+NSDictionary *
+createComplexTone(int samples, float sampleRate, float frequency, float *lastPhase)
+{
+    NSMutableData *realData = [[NSMutableData alloc] initWithLength:samples * sizeof(float)];
+    NSMutableData *imagData = [[NSMutableData alloc] initWithLength:samples * sizeof(float)];
+    
+    // If provided, copy the input phase
+    float phaseOffset = 0.;
+    if (lastPhase != nil) {
+        phaseOffset = *lastPhase;
+    }
+    
+    float delta_phase = frequency / sampleRate;
+
+    // Create the phase array
+    float *phase = malloc(sizeof(float) * samples);
+    if (phase == NULL) {
+        NSLog(@"Unable to allocate phase array!");
+        return nil;
+    }
+    
+    for (int i = 0; i < samples; i++) {
+        phase[i] = (delta_phase * (float)i) + phaseOffset;
+        phase[i] = fmod(phase[i], 1.) * 2.;
+    }
+    
+    // Vectorized cosine and sines
+    float *real = [realData mutableBytes];
+    float *imag = [imagData mutableBytes];
+    DSPSplitComplex coeff;
+    coeff.realp = real;
+    coeff.imagp = imag;
+    vvsinpif(coeff.realp, phase, &samples);
+    vvcospif(coeff.imagp, phase, &samples);
+
+    free(phase);
+    
+    // If possible, return the last phase
+    if (lastPhase != nil) {
+        *lastPhase = fmod(samples * delta_phase + phaseOffset, 1.);
+    }
+    
+    // Return the results
+    return @{ @"real" : realData,
+              @"imag" : imagData};
+}
+
 // This function first "mixes" the input frequency with a local oscillator
 // The effect of this is that the desired frequency is moved to 0 Hz.
 // Then, the band is low-pass filtered to eliminate unwanted signals
@@ -138,7 +185,8 @@ freqXlate(NSDictionary *inputDict, float localOscillator, int sampleRate)
         runningAverage = 0.;
     }
     
-    lastPhase = fmod(count * delta_phase, 1.);
+    lastPhase = fmod(count * delta_phase + lastPhase, 1.);
+
     // Return the results
     return @{ @"real" : realData,
               @"imag" : imagData };

@@ -1,14 +1,12 @@
 //
-//  lowPassFilter.m
+//  CSDRFilter.m
 //  Cocoa Radio
 //
-//  Created by William Dillon on 6/25/12.
-//  Copyright (c) 2012. All rights reserved. Licensed under the GPL v.2
+//  Created by William Dillon on 8/28/12.
+//  Copyright (c) 2012 Oregon State University (COAS). All rights reserved.
 //
 
-#include <stdio.h>
-
-#import "dspRoutines.h"
+#import "CSDRFilter.h"
 
 #import <Accelerate/Accelerate.h>
 #import <vecLib/vForce.h>
@@ -20,24 +18,24 @@
 
 //Raw mach_absolute_times going in, difference in seconds out
 /*
-double subtractTimes( uint64_t endTime, uint64_t startTime )
-{
-	uint64_t difference = endTime - startTime;
-	static double conversion = 0.0;
-	
-	if( conversion == 0.0 )
-	{
-		mach_timebase_info_data_t info;
-		kern_return_t err = mach_timebase_info( &info );
-		
-		//Convert the timebase into seconds
-		if( err == 0  )
-			conversion = 1e-9 * (double) info.numer / (double) info.denom;
-	}
-	
-	return conversion * (double) difference;
-}
-*/
+ double subtractTimes( uint64_t endTime, uint64_t startTime )
+ {
+ uint64_t difference = endTime - startTime;
+ static double conversion = 0.0;
+ 
+ if( conversion == 0.0 )
+ {
+ mach_timebase_info_data_t info;
+ kern_return_t err = mach_timebase_info( &info );
+ 
+ //Convert the timebase into seconds
+ if( err == 0  )
+ conversion = 1e-9 * (double) info.numer / (double) info.denom;
+ }
+ 
+ return conversion * (double) difference;
+ }
+ */
 
 @implementation CSDRfilter
 
@@ -126,6 +124,7 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
     _gain = gain;
     
     // Re-compute the taps
+    NSLog(@"Changed gain to %f", gain);
     [self computeTaps];
 }
 
@@ -261,7 +260,7 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
     int count    = [realIn length]   / sizeof(float);
     int numTaps  = [taps   length]   / sizeof(float);
     int capacity = (count + numTaps) * sizeof(float);
-        
+    
     NSMutableData *realData = [[NSMutableData alloc] initWithLength:sizeof(float) * count];
     NSMutableData *imagData = [[NSMutableData alloc] initWithLength:sizeof(float) * count];
     
@@ -282,8 +281,8 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
     
     // Copy the buffer contents into the temp array
     memcpy(real, [realBuffer bytes], [realBuffer length]);
-    memcpy(imag, [imagBuffer bytes], [imagBuffer length]);    
-
+    memcpy(imag, [imagBuffer bytes], [imagBuffer length]);
+    
     // Copy the input into the temp array
     memcpy(&real[numTaps], [realIn bytes], [realIn length]);
     memcpy(&imag[numTaps], [imagIn bytes], [imagIn length]);
@@ -305,7 +304,7 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
     
     // Return the results
     return @{ @"real" : realData,
-              @"imag" : imagData };
+    @"imag" : imagData };
 }
 
 // Print the taps
@@ -380,9 +379,9 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
         // Copy the contents of the old array to the end of the new one
         NSRange range = NSMakeRange(newBufferSize - [buffer length], newBufferSize);
         [tempData replaceBytesInRange:range withBytes:[buffer bytes]];
-        buffer = tempData;        
+        buffer = tempData;
     }
-
+    
     int count    = [inputData length] / sizeof(float);
     int numTaps  = [taps      length] / sizeof(float);
     int capacity = (count + numTaps)  * sizeof(float);
@@ -399,19 +398,19 @@ double subtractTimes( uint64_t endTime, uint64_t startTime )
     float *temp = malloc(capacity);
     bzero(temp, capacity);
     
-// Copy the buffer contents into the temp array
+    // Copy the buffer contents into the temp array
     memcpy(temp, [buffer bytes], [buffer length]);
     
     // Copy the input into the temp array
     memcpy(&temp[numTaps], [inputData bytes], [inputData length]);
     
-// FIR filtering
+    // FIR filtering
     const float *tapsData = [taps bytes];
     vDSP_conv(temp, 1, tapsData, 1, outFloats, 1, count, numTaps);
     
     [tapsLock unlock];
     
-// Refresh the contents of the buffer
+    // Refresh the contents of the buffer
     // We need to keep the same number of samples as the number of taps
     memcpy([buffer mutableBytes], &temp[count], numTaps * sizeof(float));
     
