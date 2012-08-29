@@ -8,6 +8,7 @@
 
 #import "audioDevice.h"
 #import <CoreAudio/CoreAudio.h>
+#import "CSDRAppDelegate.h"
 
 NSString *audioSourceNameKey = @"audioSourceName";
 NSString *audioSourceNominalSampleRateKey = @"audioSourceNominalSampleRate";
@@ -17,12 +18,10 @@ NSString *audioSourceOutputChannelsKey = @"audioSourceOutputChannels";
 NSString *audioSourceDeviceIDKey = @"audioSourceDeviceID";
 NSString *audioSourceDeviceUIDKey = @"audioSourceDeviceUID";
 
-@implementation audioDevice
+@implementation AudioDevice
 
 @synthesize sampleRate;
 @synthesize blockSize;
-@synthesize type;
-@synthesize done;
 @synthesize stereo;
 
 NSMutableArray *devices;
@@ -176,14 +175,34 @@ NSMutableArray *devices;
 {
     static dispatch_once_t dictOnceToken;
     dispatch_once(&dictOnceToken, ^{
-        [audioDevice initDeviceDict];});
+        [AudioDevice initDeviceDict];});
 
     return devices;
 }
 
+- (void)unprepare
+{
+    return;
+}
+
+- (bool)prepare
+{
+    return NO;
+}
+
+- (void)start
+{
+    return;
+}
+
+- (void)stop
+{
+    return;
+}
+
 @end
 
-@implementation audioSource
+@implementation AudioSource
 
 + (size_t)bufferSizeWithQueue:(AudioQueueRef)audioQueue
                          Desc:(AudioStreamBasicDescription)ASBDescription
@@ -207,7 +226,7 @@ NSMutableArray *devices;
 
 @end
 
-@implementation audioSink
+@implementation AudioSink
 
 + (size_t)bufferSizeWithQueue:(AudioQueueRef)audioQueue
                          Desc:(AudioStreamBasicDescription)ASBDesc
@@ -236,36 +255,21 @@ NSMutableArray *devices;
     if (self) {
         prepared = NO;
         
-        [self setType:@"float"];
-        [self setSampleRate:@"48000"];
-        [self setBlockSize:@"4800"];
+        [self setSampleRate:48000];
+        [self setBlockSize:4800];
         
-        NSArray *devicesTemp = [audioDevice deviceDict];
+        bufferFIFO = [[NSMutableArray alloc] init];
+        bufferCondition = [[NSCondition alloc] init];
         
-        NSLog(@"Found %ld devices!", [devicesTemp count]);
+        playerStateData = [[NSMutableData alloc] initWithLength:sizeof(struct AQPlayerState)];
+
+        // Keep a self-referential pointer in recorderState
+        struct AQPlayerState *state = [playerStateData mutableBytes];
+        state->context = self;
     }
     
     return self;
 }
-
-#pragma mark -
-#pragma mark Accessors, Setters, and Convenience
-- (void)setBlockSize:(NSString *)blockSize
-{
-    [super setBlockSize:blockSize];
-}
-
-- (void)setStereo:(bool)stereo
-{
-    [super setStereo:stereo];
-    
-    NSString *typeString;
-    if ([self stereo] == NSOnState) {
-        typeString = [NSString stringWithFormat:@"%@2", [self type]];
-    } else {
-        typeString = [self type];
-    }
-}    
 
 #pragma mark -
 #pragma mark Audio Queue processing
@@ -308,33 +312,23 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
 {
     struct AQPlayerState *pAqData = (struct AQPlayerState *) aqData;
     
-    audioSink *node = (__bridge audioSink *)pAqData->context;
+    AudioSink *node = pAqData->context;
 
-    if ([node done]) return;
+    if (node.running == NO) return;
 
     [node fillBuffer:inBuffer];
     
     OSStatus result = AudioQueueEnqueueBuffer(inAQ, inBuffer, 0, NULL);
     if (result != noErr) {
         NSLog(@"Unable to enqueue buffer!");
-        [node setDone:YES];
+        [node stop];
         return;
     }
 }
 
-- (NSData *)convertFormat:(NSData *)inData
+- (void)audioAvailable:(NSNotification *)notification
 {
-    //    NSMutableData *outData = [[NSMutableData alloc] initWithLength:bufferSize];
-    
-    // Convert the format
-    if ([[self type] caseInsensitiveCompare:@"float"] == NSOrderedSame) {
-        return inData;
-    }
-    
-    return nil;
-    //    if ([[self type] caseInsensitiveCompare:@"int"] == NSOrderedSame) {
-    //        
-    //    }
+    [self bufferData:[notification object]];
 }
 
 #pragma mark -
@@ -345,26 +339,24 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
         return YES;
     }
     
-    // Audio buffering
-    bufferFIFO = [[NSMutableArray alloc] init];
-    bufferCondition = [[NSCondition alloc] init];
-    
-    swSampleRate = [[self sampleRate] floatValue];
-    float secondsPerBlock = [[self blockSize] floatValue] / swSampleRate;
+    swSampleRate = self.sampleRate;
+    float secondsPerBlock = (float)self.blockSize / swSampleRate;
     
     // The ideal is for about .5 seconds per audio queue buffer
     // Choose a number of sw blocks that make up this number
     blocksPerBuffer = floorf(.5 / secondsPerBlock);
     bufferDuration = secondsPerBlock * blocksPerBuffer;
-    
-//TODO: Decide how to choose the desired device!!
-    NSDictionary *deviceDict = [devices objectAtIndex:0];
+
+    // Select the device
+    NSDictionary *deviceDict = [[AudioDevice deviceDict] objectAtIndex:self.deviceID];
     
     // Derive the hw sample rate
     hwSampleRate = 0;
-    swSampleRate = [[self sampleRate] floatValue];
+    swSampleRate = self.sampleRate;
+
     float hwSampleRateDecim  = 0;
     float hwSampleRateInterp = 0;
+
     NSArray *sampleRates = [deviceDict objectForKey:audioSourceAvailableSampleRatesKey];
     for (NSValue *rangeValue in sampleRates) {
         NSRange range = [rangeValue rangeValue];
@@ -389,24 +381,15 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
         }
     }
     
-    // If possible, it should be equal to the sw sample rate
-    // If not, choose the next-higher rate and interpolate
-    // Finally, choose the next-slower rate and decimate
     if (hwSampleRate == 0) {
-        if (hwSampleRateInterp == 0) {
-            hwSampleRate = hwSampleRateDecim;
-        } else {
-            hwSampleRate = hwSampleRateInterp;
-        }
+        NSLog(@"Unable to set sample rate: %f.", swSampleRate);
+        return NO;
     }
     
-    NSLog(@"Chose %d as the hardware sample rate.", hwSampleRate);
-    
-    // Keep a self-referential pointer in recorderState
+    // Get a reference to the state
     struct AQPlayerState *state = [playerStateData mutableBytes];
-    state->context = (__bridge void *)self;
-
     int channels = 1;
+
     // Setup the desired parameters from the Audio Queue
     state->mDataFormat.mFormatID = kAudioFormatLinearPCM;
     state->mDataFormat.mSampleRate = hwSampleRate;
@@ -415,21 +398,22 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     state->mDataFormat.mBytesPerPacket = channels * sizeof(Float32);
     state->mDataFormat.mBytesPerFrame  = channels * sizeof(Float32);
     state->mDataFormat.mFramesPerPacket = 1;
-    state->mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsPacked;    
+    state->mDataFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat |
+                                      kLinearPCMFormatFlagIsPacked;
 
     // Get the buffer size
-    bufferSize = [audioSink bufferSizeWithQueue:state->mQueue
-                                                  Desc:state->mDataFormat
-                                               Seconds:bufferDuration];
+    bufferSize = [AudioSink bufferSizeWithQueue:state->mQueue
+                                           Desc:state->mDataFormat
+                                        Seconds:bufferDuration];
     
     // Create a block for the callback
     AudioQueueOutputCallbackBlock callback = ^(AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {
         HandleOutputBuffer(state, inAQ, inBuffer);};
     
     // Create the new Audio Queue
+    dispatch_queue_t audioQueue = dispatch_queue_create("com.us.alternet.cocoaradio.audioQueue", DISPATCH_QUEUE_PRIORITY_HIGH);
     OSStatus result = AudioQueueNewOutputWithDispatchQueue(&state->mQueue, &state->mDataFormat, 0,
-                                                           dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-                                                           callback);
+                                                           audioQueue, callback);
 
     if (result != noErr) {
         NSLog(@"Unable to create new input audio queue.");
@@ -455,13 +439,77 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     }
 
     prepared = YES;
+    
+    // Subscribe to Audio notifications
+    NSNotificationCenter *center;
+    center = [NSNotificationCenter defaultCenter];
+    [center addObserver:self selector:@selector(audioAvailable:)
+                   name:CocoaSDRAudioDataNotification object:nil];
+    
     return YES;
 }
 
 - (void)stop
 {
-    done = YES;
+    self.running = NO;
 
+// Get a reference to the Audio Queue state
+    struct AQPlayerState *state = [playerStateData mutableBytes];
+
+// Stop the audio queue
+    OSStatus result = AudioQueueStop(state->mQueue, YES);
+    if (result != noErr) {
+        NSLog(@"Unable to stop the audio queue!");
+        self.running = YES;
+    }
+
+    return;
+}
+
+- (void)start
+{
+    OSStatus result = noErr;
+    
+// Make sure the node is prepared
+    if (!prepared) {
+        if ([self prepare] == NO) {
+            return;
+        }
+    }
+    
+    self.running = YES;
+    
+// Get a reference to the Audio Queue state
+    struct AQPlayerState *state = [playerStateData mutableBytes];
+
+// Load existing buffers into audio queue for priming
+    // If there aren't any, prime with one buffer of silence
+    NSMutableData *temp = [[NSMutableData alloc] initWithLength:bufferSize];
+    [bufferFIFO addObject:temp];
+    
+    int i;
+    for (i = 0; i < kNumberBuffers && [bufferFIFO count] > 0; i++) {
+        HandleOutputBuffer(state, state->mQueue, state->mBuffers[i]);
+    }
+    
+// Prime
+    UInt32 numberPrepared = 0;
+    result = AudioQueuePrime(state->mQueue, 0, &numberPrepared);
+    if (result != noErr) {
+        NSLog(@"Unable to prime the audio queue.");
+        return;
+    } else {
+        NSLog(@"Primed with %d frames.", numberPrepared);
+    }
+
+// Start audio
+    result = AudioQueueStart(state->mQueue, NULL);
+    if (result != noErr) {
+        NSLog(@"Unable to start the audio queue!");
+        return;
+    }
+
+    return;
 }
 
 - (void)unprepare
@@ -470,14 +518,14 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
         return;
     }
 
-    bufferFIFO = nil;
-    bufferCondition = nil;
-
-    // Stop the queue NOW
+// Stop the queue NOW
     struct AQPlayerState *state = [playerStateData mutableBytes];
     AudioQueueStop(state->mQueue, YES);
+
+// Discard audio
+    [bufferFIFO removeAllObjects];
     
-    // Release buffers
+// Release buffers
     for (int i = 0; i < kNumberBuffers; ++i) { 
         AudioQueueFreeBuffer(state->mQueue, state->mBuffers[i]);
     }
@@ -485,118 +533,25 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     prepared = NO;
 }
 
-- (void)run
+- (void)bufferData:(NSData *)data
 {
-    struct AQPlayerState *state = [playerStateData mutableBytes];
-
-    // Make sure the node is prepared
-    if (!prepared) {
-        if ([self prepare] == NO) {
-            return;
-        }
-    }
-    
-    // Begin reading from the argument to prime the buffers
-    // read the numBuffers amount of buffers
-    NSMutableArray *audioBuffers = [[NSMutableArray alloc] init];
-    for (int i = 0; i < kNumberBuffers; i++) {
-        @autoreleasepool {
-            NSMutableData *outData = [[NSMutableData alloc] init];
-
-            for (int j = 0; j < blocksPerBuffer; j++) {
-                // Get the data
-                NSData *tempData = nil;
-                if (tempData == nil) {
-                    done = YES;
-                    return;
-                }
-                
-                // Add the data to the buffer (10x)
-                [outData appendData:tempData];
-            }
-
-            // Convert the format and store it
-            [bufferFIFO addObject:[self convertFormat:outData]];
-            HandleOutputBuffer(state, state->mQueue, state->mBuffers[i]);
-        }
-    }
-    
-    UInt32 numberPrepared = 0;
-    UInt32 framesToPrime = (UInt32)(bufferSize / state->mDataFormat.mBytesPerFrame) * kNumberBuffers;
-    OSStatus result = AudioQueuePrime(state->mQueue, framesToPrime, &numberPrepared);
-    if (result != noErr) {
-        NSLog(@"Unable to prime the audio queue.");
-        return;
-    } else {
-        NSLog(@"Primed with %d frames.", numberPrepared);
-    }
-
-    audioBuffers = nil;
-
-    // Pre-fill the buffers with 10 units
-    for (int i = 0; i < 10; i++) {
-        @autoreleasepool {
-            NSMutableData *outData = [[NSMutableData alloc] init];
-            
-            for (int j = 0; j < blocksPerBuffer; j++) {
-                // Get the data
-                NSData *tempData = nil;
-                if (tempData == nil) {
-                    done = YES;
-                    return;
-                }
-                
-                // Add the data to the buffer (10x)
-                [outData appendData:tempData];
-            }
-            
-            // Convert the format and store it
-            [bufferFIFO addObject:[self convertFormat:outData]];
-        }
-    }
-    
-    // Start audio
-    result = AudioQueueStart(state->mQueue, NULL);
-    if (result != noErr) {
-        NSLog(@"Unable to start the audio queue!");
+    if (data == nil) {
+        NSLog(@"Attempt to enqueue nil buffer.");
         return;
     }
     
-    // Loop
-    done = NO;
-    NSMutableData *outData = [[NSMutableData alloc] initWithLength:bufferSize];
-    char *bytes = [outData mutableBytes];
-    do {
-        @autoreleasepool {
-            for (int j = 0; j < blocksPerBuffer; j++) {
-                // Get the data
-                NSData *argData = nil;
-                if (argData == nil) {
-                    done = YES;
-                    return;
-                }
-                
-                unsigned long start = [argData length] * j;
-                memcpy(&bytes[start], [argData bytes], [argData length]);
-            }
-            
-            // Put in the buffer FIFO
-            [bufferCondition lock];
-            NSData *tempData = [outData copy];
-            
-            // Make sure the buffer isn't too full
-            if ([bufferFIFO count] > 100) {
-                [bufferCondition wait];
-            }
-            
-            // The buffer has space
-            [bufferFIFO addObject:[self convertFormat:tempData]];
-            
-            tempData = nil;
-            [bufferCondition unlock];
-            
-        }
-    } while (!done);
+// Lock the conditional variable
+    [bufferCondition lock];
+    
+// Add the data
+    [bufferFIFO addObject:data];
+
+// Unlock
+    [bufferCondition unlock];
+
+// Signal
+    [bufferCondition signal];
+    
 }
 
 @end

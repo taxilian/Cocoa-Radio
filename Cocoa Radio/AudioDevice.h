@@ -9,28 +9,32 @@
 #import <Cocoa/Cocoa.h>
 #import <AudioToolbox/AudioQueue.h>
 
-@interface audioDevice : NSObject
+@interface AudioDevice : NSObject
 {
-    bool done;
-    
     bool prepared;
     
     int hwSampleRate;
 }
 
-@property (retain) NSString *sampleRate;
-@property (retain) NSString *blockSize;
-@property (retain) NSString *type;
-@property (readwrite) bool done;
+@property (readwrite) int sampleRate;
+@property (readwrite) int blockSize;
+@property (readwrite) bool running;
 @property (readwrite) bool stereo;
+@property (readwrite) int deviceID;
 
 + (NSArray *)deviceDict;
+
+- (bool)prepare;
+- (void)unprepare;
+
+- (void)start;
+- (void)stop;
 
 @end
 
 // This (audio input) hasn't been implemented yet.
 // It isn't needed yet, as the rtl-sdr doesn't transmit.
-@interface audioSource : audioDevice
+@interface AudioSource : AudioDevice
 {
 }
 
@@ -40,7 +44,7 @@
 
 @end
 
-@class audioSink;
+@class AudioSink;
 
 static const int kNumberBuffers = 10;
 
@@ -51,10 +55,10 @@ struct AQPlayerState {
     SInt64                         mCurrentPacket;
     UInt32                         mNumPacketsToRead;
     AudioStreamPacketDescription  *mPacketDescs;
-    void                          *context;
+    __unsafe_unretained AudioSink *context;
 };
 
-@interface audioSink : audioDevice
+@interface AudioSink : AudioDevice
 {
     size_t bufferSize;
     NSMutableArray *bufferFIFO;
@@ -67,5 +71,7 @@ struct AQPlayerState {
 //    struct AQPlayerState state;
     NSMutableData *playerStateData;
 }
+
+- (void)bufferData:(NSData *)data;
 
 @end
