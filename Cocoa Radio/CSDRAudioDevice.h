@@ -11,8 +11,6 @@
 #import <CoreAudio/AudioHardware.h>
 #import <AudioUnit/AudioUnit.h>
 
-#import "ringbuffer.h"
-
 @class CSDRRingBuffer;
 
 @interface CSDRAudioDevice : NSObject
