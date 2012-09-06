@@ -13,8 +13,10 @@
 @class CSDRSpectrumView;
 @class CSDRWaterfallView;
 
-@class CSDRlowPassFloat;
-@class CSDRlowPassComplex;
+@class CSDRDemod;
+
+//@class AudioSink;
+@class CSDRAudioOutput;
 
 #import "NetworkServer.h"
 #import "NetworkSession.h"
@@ -23,29 +25,35 @@
 extern NSString *CocoaSDRRawDataNotification;
 extern NSString *CocoaSDRFFTDataNotification;
 extern NSString *CocoaSDRBaseBandNotification;
+extern NSString *CocoaSDRAudioDataNotification;
 #endif
 
-@interface CSDRAppDelegate : NSObject <NSApplicationDelegate, NetworkServerDelegate, NetworkSessionDelegate>
+@interface CSDRAppDelegate : NSObject <NSApplicationDelegate>//, NetworkServerDelegate, NetworkSessionDelegate>
 {
+    // This is the dongle class
     RTLSDRDevice *device;
     
+    // This thread is for the loop that reads from the dongle
     NSThread *readThread;
 
-    float tuningValue;
-    float loValue;
+    // This is the sample rate of the dongle
+    int rfSampleRate;
+
+    // This is the sample rate of the audio device
+    int afSampleRate;
     
-    float _IFbandwidth;
-    float _AFbandwidth;
+    // These classes are the audio output device and the SDR algorithm
+    CSDRAudioOutput *audioOutput;
+    CSDRDemod *demodulator;
     
-    CSDRlowPassComplex *IFFilter;
-    CSDRlowPassFloat *AFFilter;
-    
+    // This is for network debugging (i.e. GNU Radio)
     NetworkServer *netServer;
     NSMutableArray *sessions;
     
     NSDictionary *fftBufferDict;
-    
-    dispatch_queue_t processQueue;
+
+    // This is for file debugging (i.e. Audacity, or GNU Radio)
+    NSMutableData *outData;
 }
 
 @property (readwrite) IBOutlet NSWindow *window;
@@ -62,9 +70,7 @@ extern NSString *CocoaSDRBaseBandNotification;
 @property (readwrite) float tuningValue;
 @property (readwrite) float loValue;
 
-@property (readwrite) float IFbandwidth;
-@property (readwrite) float AFbandwidth;
+@property (readonly)  CSDRDemod *demodulator;
 
-- (NSDictionary *)complexFFTOnDict:(NSDictionary *)inDict;
 
 @end
