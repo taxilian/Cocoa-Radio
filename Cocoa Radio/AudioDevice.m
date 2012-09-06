@@ -10,6 +10,8 @@
 #import <CoreAudio/CoreAudio.h>
 #import "CSDRAppDelegate.h"
 
+#include <pthread.h>
+
 NSString *audioSourceNameKey = @"audioSourceName";
 NSString *audioSourceNominalSampleRateKey = @"audioSourceNominalSampleRate";
 NSString *audioSourceAvailableSampleRatesKey = @"audioSourceAvailableSampleRates";
@@ -204,6 +206,102 @@ NSMutableArray *devices;
 
 @implementation AudioSource
 
+// The user is expected to free the buffer
+void *dequeueBuffer(audioFIFO_t *fifo, size_t *size)
+{
+    void *retval = NULL;
+    pthread_mutex_lock(&fifo->lock);
+    
+    if (fifo->used > 0) {
+        // Keep a reference to the buffer
+        retval = fifo->head->buffer;
+        
+        // If space for the size is provided, copy the information
+        if (size != NULL) {
+            *size = fifo->head->bufferSize;
+        }
+        
+        // Update the status of the buffer
+        void *nextHead = fifo->head->nextBuffer; // (1)
+        fifo->head->nextBuffer = fifo->unused;   // (2)
+        fifo->unused = fifo->head;               // (3)
+        fifo->head = nextHead;                   // (4)
+        
+
+        // Update counts
+        fifo->used--;
+        fifo->available++;
+    }
+
+    pthread_mutex_unlock(&fifo->lock);
+    
+    return retval;
+}
+
+// The provided buffer must have a lifetime at least as long as
+// the object is in the FIFO.
+void enqueueBuffer(audioFIFO_t *fifo, void *data, size_t dataLength)
+{
+    pthread_mutex_lock(&fifo->lock);
+    
+    if (fifo->available == 0) {
+        fifo->unused = (audioFIFO_buffer_t *)malloc(sizeof(audioFIFO_buffer_t));
+        if (fifo->unused == NULL) {
+            NSLog(@"Unable to allocate FIFO object.");
+            exit(EXIT_FAILURE);
+        }
+        
+        fifo->unused->nextBuffer = NULL;
+        fifo->available++;
+    }
+    
+    // Keep a reference to the buffer
+    fifo->unused->buffer = data;
+    fifo->unused->bufferSize = dataLength;
+            
+    // Update the status of the buffer
+    void *nextUnused = fifo->unused->nextBuffer; // (1)
+    fifo->unused->nextBuffer = fifo->head;       // (2)
+    fifo->head = fifo->unused;                   // (4)
+    fifo->unused = nextUnused;                   // (3)
+    
+    // Update counts
+    fifo->available--;
+    fifo->used++;
+    
+    pthread_mutex_unlock(&fifo->lock);
+    
+}
+
+void initBuffer(audioFIFO_t *fifo)
+{
+    pthread_mutex_init(&fifo->lock, NULL);
+    fifo->used = 0;
+    fifo->available = 0;
+    fifo->head = NULL;
+    fifo->unused = NULL;
+}
+
+void flushBuffers(audioFIFO_t *fifo)
+{
+    void *buffer;
+    do {
+        buffer = dequeueBuffer(fifo, NULL);
+    } while (buffer != NULL);
+}
+
+int countBuffers(audioFIFO_t *fifo)
+{
+    int count = -1;
+    pthread_mutex_lock(&fifo->lock);
+
+    count = fifo->used;
+    
+    pthread_mutex_unlock(&fifo->lock);
+    
+    return count;
+}
+
 + (size_t)bufferSizeWithQueue:(AudioQueueRef)audioQueue
                          Desc:(AudioStreamBasicDescription)ASBDescription
                       Seconds:(Float64)seconds
@@ -258,7 +356,11 @@ NSMutableArray *devices;
         [self setSampleRate:48000];
         [self setBlockSize:4800];
         
-        bufferFIFO = [[NSMutableArray alloc] init];
+//        bufferFIFO = [[NSMutableArray alloc] init];
+
+        // Initialize the FIFO
+        initBuffer(&fifo);
+        
         bufferCondition = [[NSCondition alloc] init];
         
         playerStateData = [[NSMutableData alloc] initWithLength:sizeof(struct AQPlayerState)];
@@ -279,32 +381,35 @@ NSMutableArray *devices;
         return;
     }
  
-    aqBuffer->mPacketDescriptionCount = 0;
-    aqBuffer->mAudioDataByteSize = (uint32)bufferSize;
-
-    NSData *inputData = nil;
-    
     // Try to get a buffer
-    [bufferCondition lock];
-    if ([bufferFIFO count] != 0) {
-        inputData = [bufferFIFO objectAtIndex:0];
-        [bufferFIFO removeObjectAtIndex:0];
-    }
-    [bufferCondition unlock];
-    [bufferCondition signal];
-    
-    // If the buffer is nil, we had a buffer underrun
-    // Fill it with '0's
-    if (inputData == nil) {
+    size_t bufferLength = 0;
+    void *buffer = dequeueBuffer(&fifo, &bufferLength);
+
+    aqBuffer->mPacketDescriptionCount = 0;
+
+    // If the buffer is nil, we had a buffer underrun Fill it with '0's
+    if (buffer == NULL) {
         NSLog(@"Audio buffer underrun.");
-        bzero(aqBuffer->mAudioData, bufferSize);
+        int capacity = aqBuffer->mAudioDataBytesCapacity;
+        aqBuffer->mAudioDataByteSize = capacity;
+        bzero(aqBuffer->mAudioData, capacity);
     }
 
+    // Otherwise, copy the data into the buffer
     else {
-        // Otherwise, copy the data into the buffer
-        const void *bytes = [inputData bytes];
-        memcpy(aqBuffer->mAudioData,
-               bytes, bufferSize);
+        aqBuffer->mAudioDataByteSize = (uint32)bufferLength;
+//        memcpy(aqBuffer->mAudioData, buffer, bufferLength);
+
+        float *floatBytes = aqBuffer->mAudioData;
+        // Load a sample sine wave into the buffer
+        float delta_phase = 100. / 48000.;
+        for (int i = 0; i < bufferSize / sizeof(float); i++) {
+            float phase = (delta_phase * i);
+            phase = fmod(phase, 1.) * 2.;
+            floatBytes[i] = sinf(phase * M_PI);
+        }
+        
+//        free(buffer);
     }
 }
 
@@ -339,20 +444,12 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
         return YES;
     }
     
-    swSampleRate = self.sampleRate;
-    float secondsPerBlock = (float)self.blockSize / swSampleRate;
-    
-    // The ideal is for about .5 seconds per audio queue buffer
-    // Choose a number of sw blocks that make up this number
-    blocksPerBuffer = floorf(.5 / secondsPerBlock);
-    bufferDuration = secondsPerBlock * blocksPerBuffer;
-
     // Select the device
     NSDictionary *deviceDict = [[AudioDevice deviceDict] objectAtIndex:self.deviceID];
     
     // Derive the hw sample rate
     hwSampleRate = 0;
-    swSampleRate = self.sampleRate;
+    float swSampleRate = self.sampleRate;
 
     float hwSampleRateDecim  = 0;
     float hwSampleRateInterp = 0;
@@ -402,6 +499,7 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
                                       kLinearPCMFormatFlagIsPacked;
 
     // Get the buffer size
+    float bufferDuration = (float)self.blockSize / (float)self.sampleRate;
     bufferSize = [AudioSink bufferSizeWithQueue:state->mQueue
                                            Desc:state->mDataFormat
                                         Seconds:bufferDuration];
@@ -411,7 +509,8 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
         HandleOutputBuffer(state, inAQ, inBuffer);};
     
     // Create the new Audio Queue
-    dispatch_queue_t audioQueue = dispatch_queue_create("com.us.alternet.cocoaradio.audioQueue", DISPATCH_QUEUE_PRIORITY_HIGH);
+    dispatch_queue_t audioQueue = dispatch_queue_create("com.us.alternet.cocoaradio.audioQueue",
+                                                        DISPATCH_QUEUE_SERIAL);
     OSStatus result = AudioQueueNewOutputWithDispatchQueue(&state->mQueue, &state->mDataFormat, 0,
                                                            audioQueue, callback);
 
@@ -434,8 +533,12 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     }
 
     // Create a set of buffers
-    for (int i = 0; i < kNumberBuffers; ++i) { 
-        AudioQueueAllocateBuffer(state->mQueue, (UInt32)bufferSize, &state->mBuffers[i]);
+    for (int i = 0; i < kNumberBuffers; ++i) {
+        AudioQueueBufferRef newBuffer;
+        AudioQueueAllocateBuffer(state->mQueue, (UInt32)bufferSize, &newBuffer);
+        state->mBuffers[i] = newBuffer;
+        
+//        NSLog(@"Created buffer %d at 0x%llx.", i, (uint64_t)state->mBuffers[i]->mAudioData);
     }
 
     prepared = YES;
@@ -483,12 +586,16 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     struct AQPlayerState *state = [playerStateData mutableBytes];
 
 // Load existing buffers into audio queue for priming
+
     // If there aren't any, prime with one buffer of silence
-    NSMutableData *temp = [[NSMutableData alloc] initWithLength:bufferSize];
-    [bufferFIFO addObject:temp];
-    
+    if (countBuffers(&fifo) == 0) {
+        void *buffer = malloc(bufferSize);
+        bzero(buffer, sizeof(float) * bufferSize);
+        enqueueBuffer(&fifo, buffer, bufferSize);
+    }
+        
     int i;
-    for (i = 0; i < kNumberBuffers && [bufferFIFO count] > 0; i++) {
+    for (i = 0; i < kNumberBuffers && countBuffers(&fifo) > 0; i++) {
         HandleOutputBuffer(state, state->mQueue, state->mBuffers[i]);
     }
     
@@ -523,7 +630,7 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
     AudioQueueStop(state->mQueue, YES);
 
 // Discard audio
-    [bufferFIFO removeAllObjects];
+    flushBuffers(&fifo);
     
 // Release buffers
     for (int i = 0; i < kNumberBuffers; ++i) { 
@@ -540,17 +647,17 @@ static void HandleOutputBuffer(void *aqData, AudioQueueRef inAQ, AudioQueueBuffe
         return;
     }
     
-// Lock the conditional variable
-    [bufferCondition lock];
+    float *bytes = malloc(bufferSize);
     
-// Add the data
-    [bufferFIFO addObject:data];
-
-// Unlock
-    [bufferCondition unlock];
-
-// Signal
-    [bufferCondition signal];
+    // Load a sample sine wave into the buffer
+    float delta_phase = 100. / 48000.;
+    for (int i = 0; i < bufferSize / sizeof(float); i++) {
+        float phase = (delta_phase * i);
+        phase = fmod(phase, 1.) * 2.;
+        bytes[i] = sinf(phase * M_PI);
+    }
+    
+    enqueueBuffer(&fifo, bytes, bufferSize);
     
 }
 

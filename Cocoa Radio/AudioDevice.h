@@ -58,15 +58,29 @@ struct AQPlayerState {
     __unsafe_unretained AudioSink *context;
 };
 
+typedef struct {
+    void *buffer;
+    size_t bufferSize;
+    void *nextBuffer;
+} audioFIFO_buffer_t;
+
+typedef struct {
+    audioFIFO_buffer_t *head;
+    audioFIFO_buffer_t *unused;
+
+    int used;
+    int available;
+
+    pthread_mutex_t lock;
+} audioFIFO_t;
+
 @interface AudioSink : AudioDevice
 {
     size_t bufferSize;
-    NSMutableArray *bufferFIFO;
+//    NSMutableArray *bufferFIFO;
     NSCondition *bufferCondition;
 
-    float swSampleRate;
-    int blocksPerBuffer;
-    float bufferDuration;
+    audioFIFO_t fifo;
     
 //    struct AQPlayerState state;
     NSMutableData *playerStateData;
