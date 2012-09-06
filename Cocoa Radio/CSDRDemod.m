@@ -28,12 +28,12 @@
                 
         // Set default sample rates (this will set decimation and interpolation)
         _rfSampleRate = 2048000;
-        self.afSampleRate = 96000;
+        self.afSampleRate = 48000;
 
         self.ifBandwidth  = 90000;
         self.ifSkirtWidth = 20000;
 
-        self.afBandwidth  = 48000;
+        self.afBandwidth  = 24000;
         self.afSkirtWidth = 20000;
     }
     
@@ -162,6 +162,11 @@ int gcd(int a, int b) {
     // Rational resampling
     NSData *audio;
     audio = [AFResampler resample:audioFiltered];
+        
+    // Generate a test signal
+//    static float lastPhase = 0.;
+//    NSDictionary *signal = createComplexTone([audio length] / sizeof(float), 48000, 100, &lastPhase);
+//    return signal[@"real"];
     
     return audio;
 }
