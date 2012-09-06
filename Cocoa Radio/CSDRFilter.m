@@ -107,6 +107,8 @@
     [tapsLock unlock];
     
     free(window);
+    
+//    NSLog(@"Created filter taps (%d)", numTaps);
 }
 
 - (float)gain       { return _gain; }
