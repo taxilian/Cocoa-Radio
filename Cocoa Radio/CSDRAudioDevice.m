@@ -8,11 +8,16 @@
 
 #import "CSDRAudioDevice.h"
 #import "CSDRRingBuffer.h"
+#import "CSDRAppDelegate.h"
 
 #import <CoreAudio/CoreAudio.h>
 #import <AudioToolbox/AudioUnitUtilities.h>
 
 #include "audioprobes.h"
+
+#import <mach/mach_time.h>
+
+double subtractTimes(uint64_t end, uint64_t start);
 
 @implementation CSDRAudioDevice
 
@@ -45,6 +50,12 @@
         
         //gains access to the services provided by the component
         AudioComponentInstanceNew(comp, &auHAL);
+        
+        // Subscribe to Audio notifications
+        NSNotificationCenter *center;
+        center = [NSNotificationCenter defaultCenter];
+        [center addObserver:self selector:@selector(audioAvailable:)
+                       name:CocoaSDRAudioDataNotification object:nil];
     }
     
     return self;
@@ -91,9 +102,32 @@ OSStatus OutputProc(void *inRefCon,
            ioData->mBuffers[0].mData,
            ioData->mBuffers[1].mDataByteSize);
     
-//    ringbuffer *buffer = inRefCon;
-//    read_ringbuffer(buffer, inNumberFrames,
-//                    ioData->mBuffers[0].mData);
+
+    static uint64_t last_buffer_time = 0;
+    static int lastFillLevel = 0;
+    
+    // Attempt to determine whether the buffer backlog is increasing
+    if (COCOARADIOAUDIO_AUDIOBUFFER_ENABLED()) {
+        uint64_t this_time = TimeStamp->mHostTime;
+        double deltaTime = subtractTimes(this_time, last_buffer_time);
+        
+        double derivedSampleRate = inNumberFrames / deltaTime;
+        
+        int deltaTime_us;
+        if (last_buffer_time == 0) {
+            deltaTime_us = 0;
+        } else {
+            deltaTime_us = deltaTime * 1000000;
+        }
+        
+        last_buffer_time = this_time;
+        
+        int fillLevel = [ringBuffer fillLevel];
+        int deltaFillLevel = [ringBuffer fillLevel] - lastFillLevel;
+        lastFillLevel = fillLevel;
+        
+        COCOARADIOAUDIO_AUDIOBUFFER(fillLevel, (int)derivedSampleRate);
+    }
     
 	return noErr;
 }
@@ -195,6 +229,23 @@ OSStatus OutputProc(void *inRefCon,
 
     UInt32 size = sizeof(AudioStreamBasicDescription);
     
+    OSStatus err =noErr;
+    Float64 trySampleRate = self.sampleRate;
+    err = AudioUnitSetProperty(auHAL,
+                               kAudioUnitProperty_SampleRate,
+                               kAudioUnitScope_Global,
+                               0,
+                               &trySampleRate,
+                               sizeof(trySampleRate));
+
+    trySampleRate = 0.;
+    err = AudioUnitGetProperty(auHAL,
+                               kAudioUnitProperty_SampleRate,
+                               kAudioUnitScope_Global,
+                               0,
+                               &trySampleRate,
+                               &size);
+    
     //Get the input device format
     AudioUnitGetProperty (auHAL,
                           kAudioUnitProperty_StreamFormat,
@@ -257,6 +308,16 @@ OSStatus OutputProc(void *inRefCon,
 
     _running = YES;
     
+    AudioStreamBasicDescription deviceFormat;
+    UInt32 size = sizeof(AudioStreamBasicDescription);
+    AudioUnitGetProperty (auHAL,
+                          kAudioUnitProperty_StreamFormat,
+                          kAudioUnitScope_Output,
+                          1,
+                          &deviceFormat,
+                          &size);
+
+    
     return YES;
 }
 
@@ -265,23 +326,11 @@ OSStatus OutputProc(void *inRefCon,
     [ringBuffer storeData:data];
     return;
     
-    NSMutableData *tempBytes = [[NSMutableData alloc] initWithLength:[data length]];
-    float *bytes = [tempBytes mutableBytes];
-    int inNumberFrames = [data length] / sizeof(float);
-    
-    // Load a sample sine wave into the buffer
-    float delta_phase = 100. / 48000.;
-    static float phase_offset = 0.;
-    for (int i = 0; i < inNumberFrames; i++) {
-        float phase = (delta_phase * i) + phase_offset;
-        phase = fmod(phase, 1.) * 2.;
-        bytes[i] = sinf(phase * M_PI);
-        bytes[i] = (((float)i / (float)inNumberFrames) * 2.) - 1.;
-    }
-    
-    phase_offset = fmod(inNumberFrames * delta_phase + phase_offset, 1.);
+}
 
-    [ringBuffer storeData:tempBytes];
+- (void)audioAvailable:(NSNotification *)notification
+{
+    [self bufferData:[notification object]];
 }
 
 @end

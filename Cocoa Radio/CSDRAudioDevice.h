@@ -27,7 +27,7 @@
     size_t bufferSize;
     
     CSDRRingBuffer *ringBuffer;
-//    ringbuffer *buffer;
+
 }
 
 + (NSArray *)deviceDict;
