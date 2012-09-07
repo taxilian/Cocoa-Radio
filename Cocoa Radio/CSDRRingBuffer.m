@@ -29,6 +29,12 @@
     return self;
 }
 
+- (int)fillLevel
+{
+    int capacityFrames = [data length] / sizeof(float);
+    return (head - tail + capacityFrames) % capacityFrames;
+}
+
 - (void)storeData:(NSData *)newData
 {
     [lock lock];
@@ -110,6 +116,10 @@
     int capacityFrames = [data length] / sizeof(float);
     int filledFrames = (head - tail + capacityFrames) % capacityFrames;
 
+    if (filledFrames < nFrames) {
+        NSLog(@"Buffer underflow");
+    }
+    
     // DTrace it
     if (COCOARADIOAUDIO_RINGBUFFEREMPTY_ENABLED()) {
         COCOARADIOAUDIO_RINGBUFFEREMPTY(nFrames, head, tail);

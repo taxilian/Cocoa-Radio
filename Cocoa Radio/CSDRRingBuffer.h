@@ -19,6 +19,8 @@
     int tail, head;
 }
 
+@property (readonly) int fillLevel;
+
 - (id)initWithCapacity:(NSInteger)cap;
 
 - (void)storeData:(NSData *)data;
