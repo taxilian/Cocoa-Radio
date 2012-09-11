@@ -19,10 +19,13 @@
     
     float _rfSampleRate;
     float _afSampleRate;
+    
+    float _rfCorrectedRate;
 }
 
 @property (readwrite) float rfSampleRate;
 @property (readwrite) float afSampleRate;
+@property (readwrite) float rfCorrectedRate;
 
 @property (readwrite) float centerFreq;
 

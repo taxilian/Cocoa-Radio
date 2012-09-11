@@ -28,7 +28,8 @@
                 
         // Set default sample rates (this will set decimation and interpolation)
         _rfSampleRate = 2048000;
-        self.afSampleRate = 48000;
+        _rfCorrectedRate = 2048000;
+        self.afSampleRate = 44100;
 
         self.ifBandwidth  = 90000;
         self.ifSkirtWidth = 20000;
@@ -59,19 +60,27 @@ int gcd(int a, int b) {
 - (void)calculateResampleRatio
 {
     // Get the GCD between sample rates (makes ints)
-    int GCD = gcd(self.rfSampleRate, self.afSampleRate);
+    int GCD = gcd(self.rfCorrectedRate, self.afSampleRate);
     
     int interpolator = self.afSampleRate / GCD;
-    int decimator    = self.rfSampleRate / GCD;
+    int decimator    = self.rfCorrectedRate / GCD;
     
     [AFResampler setInterpolator:interpolator];
     [AFResampler setDecimator:decimator];
+
+    if (decimator == 0) {
+        NSLog(@"Setting decimator to 0!");
+    }
+    
+//    NSLog(@"Set resample ratio to %d/%d", interpolator, decimator);
 }
 
 #pragma mark Getters and Setters
 - (void)setRfSampleRate:(float)rfSampleRate
 {
     _rfSampleRate = rfSampleRate;
+    // Assume corrected rate equals requested until known better
+    _rfCorrectedRate = rfSampleRate;
     
     [IFFilter setSampleRate:_rfSampleRate];
     [AFFilter setSampleRate:_rfSampleRate];
@@ -82,6 +91,17 @@ int gcd(int a, int b) {
 - (float)rfSampleRate
 {
     return _rfSampleRate;
+}
+
+- (void)setRfCorrectedRate:(float)rate
+{
+    _rfCorrectedRate = rate;
+    [self calculateResampleRatio];
+}
+
+- (float)rfCorrectedRate
+{
+    return _rfCorrectedRate;
 }
 
 - (void)setAfSampleRate:(float)afSampleRate
@@ -163,11 +183,6 @@ int gcd(int a, int b) {
     NSData *audio;
     audio = [AFResampler resample:audioFiltered];
         
-    // Generate a test signal
-//    static float lastPhase = 0.;
-//    NSDictionary *signal = createComplexTone([audio length] / sizeof(float), 48000, 100, &lastPhase);
-//    return signal[@"real"];
-    
     return audio;
 }
 
