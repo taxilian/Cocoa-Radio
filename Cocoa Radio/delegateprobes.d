@@ -2,6 +2,6 @@ provider CocoaRadio
 {
 	probe fftCounter(int);
 	probe firCounter(int);
-    probe dataReceived();
+    probe dataReceived(int);
     probe sendData(int);
 };
