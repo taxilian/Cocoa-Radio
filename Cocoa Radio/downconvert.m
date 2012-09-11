@@ -252,6 +252,8 @@ quadratureDemod(NSDictionary *inputDict, float gain, float offset)
     // Vectorized gain multiplication
     vDSP_vsmsa(resultFloats, 1, &gain, &offset, resultFloats, 1, count);
     
+    free(temp.realp);
+    free(temp.imagp);
 #else
     
     // Iterate through the array
