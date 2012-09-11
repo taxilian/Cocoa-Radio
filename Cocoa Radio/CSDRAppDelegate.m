@@ -10,7 +10,6 @@
 #import "CSDRAppDelegate.h"
 #undef  CSDRAPPDELEGATE_M
 
-#import <rtl-sdr/RTLSDRDevice.h>
 #import <mach/mach_time.h>
 
 #import "CSDRSpectrumView.h"
@@ -25,8 +24,8 @@
 
 // This block size sets the frequency that the read loop runs
 // sample rate / block size = block rate
-#define SAMPLERATE 2048000
-#define BLOCKSIZE   204800
+#define SAMPLERATE 2000000
+#define BLOCKSIZE    40960
 
 NSString *CocoaSDRRawDataNotification   = @"CocoaSDRRawDataNotification";
 NSString *CocoaSDRFFTDataNotification   = @"CocoaSDRFFTDataNotification";
@@ -107,7 +106,7 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
 
 - (void)readLoop
 {
-    [device resetEndpoints];
+    __block int prebuffer = 2;
 
     NSMutableData *zeros = [[NSMutableData alloc] initWithLength:BLOCKSIZE * 2];
     
@@ -127,7 +126,7 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
             }
 
             if (COCOARADIO_DATARECEIVED_ENABLED()) {
-                COCOARADIO_DATARECEIVED();
+                COCOARADIO_DATARECEIVED((int)[resultData length]);
             }
             
             // Get a reference to the raw bytes from the device
@@ -180,21 +179,88 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
             ^{
                 // Demodulate the data
                 NSData *audio = [demodulator demodulateData:complexRaw];
+//                [audioOutput bufferData:audio];
 
-                [audioOutput bufferData:audio];
+                if (prebuffer > 1) {
+                    prebuffer--;
+                } else {
+                    [audioOutput start];
+                }
+
                 // Notify that the results are available
-//                NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-//                [center postNotificationName:CocoaSDRAudioDataNotification
-//                                      object:audio];
+                NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+                [center postNotificationName:CocoaSDRAudioDataNotification
+                                      object:audio];
             });
         }
     } while (true);
 }
 
+- (void)processRFBlock:(NSData *)inputData withDuration:(float)duration
+{
+    @autoreleasepool {
+        static double averageRate = 0.;
+        
+        // Get the sample rate (make sure it's not zero)
+//        double rate = ([inputData length] / 2) / duration;
+//        if (averageRate == 0.) {
+//            averageRate = rate;
+//        } else {
+//            averageRate = (averageRate * .75) + (rate * .25);
+//            [demodulator setRfCorrectedRate:rate];
+//        }
+        
+        if (inputData == nil) {
+            return;
+        }
+        
+        if (COCOARADIO_DATARECEIVED_ENABLED()) {
+            COCOARADIO_DATARECEIVED((int)[inputData length]);
+        }
+        
+        // Get a reference to the raw bytes from the device
+        const unsigned char *resultSamples = [inputData bytes];
+        if (resultSamples == nil) {
+            NSLog(@"Unable to get bytes from RF Data.");
+            return;
+        }
+        
+        // We need them to be floats (Real [Inphase] and Imaqinary [Quadrature])
+        NSMutableData *realData = [[NSMutableData alloc] initWithLength:sizeof(float) * BLOCKSIZE];
+        NSMutableData *imagData = [[NSMutableData alloc] initWithLength:sizeof(float) * BLOCKSIZE];
+        
+        // All the vDSP routines (from the Accelerate framework)
+        // need the complex data represented in a COMPLEX_SPLIT structure
+        float *realp  = [realData mutableBytes];
+        float *imagp  = [imagData mutableBytes];
+        
+        for (int i = 0; i < BLOCKSIZE; i++) {
+            realp[i] = (float)(resultSamples[i*2 + 0] - 127) / 128;
+            imagp[i] = (float)(resultSamples[i*2 + 1] - 127) / 128;
+        }
+        
+        NSDictionary *complexRaw = @{ @"real" : realData,
+        @"imag" : imagData };
+        
+        // Perform all the operations on this block
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0),
+                       ^{
+                           // Demodulate the data
+                           NSData *audio = [demodulator demodulateData:complexRaw];
+                           [audioOutput bufferData:audio];
+                           audio = nil;
+                           
+                           // Notify that the results are available
+                           //        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+                           //        [center postNotificationName:CocoaSDRAudioDataNotification
+                           //                              object:audio];
+                       });    }
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     rfSampleRate = SAMPLERATE;
-    afSampleRate = 48000;
+    afSampleRate = 44100;
     
 //    processQueue = dispatch_queue_create("com.us.alternet.cocoa-radio.processQueue",
 //                                         DISPATCH_QUEUE_SERIAL);
@@ -271,77 +337,21 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
         NSApplication *app = [NSApplication sharedApplication];
         [app stop:self];
     }
-    [audioOutput start];
-    
-    // Create a thread for reading
-    readThread = [[NSThread alloc] initWithTarget:self
-                                         selector:@selector(readLoop)
-                                           object:nil];
-    [readThread start];
     
     // Setup the shared context for the spectrum and waterfall views
     [[self waterfallView] initialize];
     [[self spectrumView] shareContextWithController:[self waterfallView]];
     [[self spectrumView] initialize];
     
-    // Create the network server
-//    netServer = [[NetworkServer alloc] init];
-//    [netServer setDelegate:self];
-//    [netServer openWithPort:1234];
-//    sessions = [[NSMutableArray alloc] init];
-//    [netServer acceptInBackground];
-    
-    outData = [[NSMutableData alloc] init];
-    
-    // Subscribe to Audio notifications
-    NSNotificationCenter *center;
-    center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(audioAvailable:)
-                   name:CocoaSDRAudioDataNotification object:nil];
-    
-
-    AudioBufferList *theBufferList;
-    theBufferList = (AudioBufferList *)malloc(offsetof(AudioBufferList, mBuffers[2]));
-    theBufferList->mNumberBuffers = 2;
-    theBufferList->mBuffers[0].mNumberChannels = 1;
-    theBufferList->mBuffers[0].mData =  malloc(480 * sizeof(float));
-    theBufferList->mBuffers[0].mDataByteSize = (UInt32)480 * sizeof(float);
-    theBufferList->mBuffers[1].mNumberChannels = 1;
-    theBufferList->mBuffers[1].mData =  malloc(480 * sizeof(float));
-    theBufferList->mBuffers[1].mDataByteSize = (UInt32)480 * sizeof(float);
-
-    float buffer[4800];
-    for (int i = 0; i < 4800; i++) {
-        buffer[i] = i;
-    }
-    
-    CSDRRingBuffer *ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:14400];
-
-    // This should accurately simulate the audio operations.
-    for (int i = 0; i < 20; i++) {
-        // The stores/retreivals are 10:1
-        [ringBuffer storeData:[NSData dataWithBytes:buffer length:4800 * sizeof(float)]];
-        
-        int last = 0;
-        for (int j = 0; j < 10; j++) {
-            [ringBuffer fetchFrames:480 into:theBufferList];
-            
-            // Check for errors
-            float *floatVals = (float *)theBufferList->mBuffers[0].mData;
-            for (int k = 0; k < 480; k++) {
-                float expected = buffer[last];
-                float received = floatVals[k];
-                if (buffer[last] != floatVals[k]) {
-                    NSLog(@"Found an error in the return.");
-                }
-                
-                last = last + 1 % 4800;
-            }
-        }
-    }
-    
-//    NSApplication *app = [NSApplication sharedApplication];
-//    [app stop:self];
+    // Begin asynchronously reading from the device
+    // The following warning can be ignored.  There is a retain cycle
+    // but the objects in question live for the duration of the app.
+    block = ^(NSData *resultData, float duration) {
+        CSDRAppDelegate *delegate = self;
+        [delegate processRFBlock:resultData withDuration:duration];};
+    [device resetEndpoints];
+    [device readAsynchLength:BLOCKSIZE * 2
+                   withBlock:block];
     
     return;
 }
@@ -429,6 +439,7 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
 - (void)setLoValue:(float)newLoValue
 {
     [device setCenterFreq:(newLoValue * 1000000)];
+    [audioOutput markDiscontinuity];
 }
 
 // Tuning value provided in KHz

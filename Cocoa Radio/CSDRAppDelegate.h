@@ -21,6 +21,8 @@
 #import "NetworkServer.h"
 #import "NetworkSession.h"
 
+#import <rtl-sdr/RTLSDRDevice.h>
+
 #ifndef CSDRAPPDELEGATE_M
 extern NSString *CocoaSDRRawDataNotification;
 extern NSString *CocoaSDRFFTDataNotification;
@@ -30,8 +32,9 @@ extern NSString *CocoaSDRAudioDataNotification;
 
 @interface CSDRAppDelegate : NSObject <NSApplicationDelegate>//, NetworkServerDelegate, NetworkSessionDelegate>
 {
-    // This is the dongle class
+    // This is the dongle class (we also need to maintain a reference to the async block)
     RTLSDRDevice *device;
+    RTLSDRAsyncBlock block;
     
     // This thread is for the loop that reads from the dongle
     NSThread *readThread;
