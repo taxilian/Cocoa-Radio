@@ -485,8 +485,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Cocoa Radio/Cocoa Radio-Prefix.pch";
 				INFOPLIST_FILE = "Cocoa Radio/Cocoa Radio-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				PRODUCT_NAME = CocoaRadio;
-				SDKROOT = macosx10.8;
+				SDKROOT = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -500,8 +501,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Cocoa Radio/Cocoa Radio-Prefix.pch";
 				INFOPLIST_FILE = "Cocoa Radio/Cocoa Radio-Info.plist";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				PRODUCT_NAME = CocoaRadio;
-				SDKROOT = macosx10.8;
+				SDKROOT = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
