@@ -24,6 +24,8 @@
         
         data = [[NSMutableData alloc] initWithLength:cap * sizeof(float)];
         tail = head = 0;
+        
+        NSLog(@"Created a ring buffer with %ld elements.", cap);
     }
     
     return self;
@@ -33,6 +35,16 @@
 {
     int capacityFrames = [data length] / sizeof(float);
     return (head - tail + capacityFrames) % capacityFrames;
+}
+
+- (int)capacity
+{
+    return [data length] / sizeof(float);
+}
+
+- (void)clear
+{
+    head = tail = 0;
 }
 
 - (void)storeData:(NSData *)newData
@@ -51,6 +63,11 @@
         COCOARADIOAUDIO_RINGBUFFERFILL(newDataFrames, head, tail);
     }
 
+    int overflowAmount = newDataFrames - (capacityFrames - usedBuffer);
+    if (overflowAmount > 0) {
+        NSLog(@"Audio ring buffer overflow");
+    }
+    
     // Do it the easy way
     float *outFloats = [data mutableBytes];
     const float *inFloats = [newData bytes];
@@ -66,12 +83,12 @@
     [lock unlock];
     return;
     
-    int overflowAmount = newDataFrames - (capacityFrames - usedBuffer);
-    if (overflowAmount > 0) {
-        NSLog(@"Audio ring buffer overflow");
-        // Adjust the head index
-        tail = (tail + overflowAmount) % capacityFrames;
-    }
+//    int overflowAmount = newDataFrames - (capacityFrames - usedBuffer);
+//    if (overflowAmount > 0) {
+//        NSLog(@"Audio ring buffer overflow");
+//        // Adjust the head index
+//        tail = (tail + overflowAmount) % capacityFrames;
+//    }
 
     // Copy as much as possible from the tail to the buffer end
     int framesToEndOfBuffer = (capacityFrames - head);

@@ -21,6 +21,193 @@ double subtractTimes(uint64_t end, uint64_t start);
 
 @implementation CSDRAudioDevice
 
+NSString *audioSourceNameKey = @"audioSourceName";
+NSString *audioSourceNominalSampleRateKey = @"audioSourceNominalSampleRate";
+NSString *audioSourceAvailableSampleRatesKey = @"audioSourceAvailableSampleRates";
+NSString *audioSourceInputChannelsKey = @"audioSourceInputChannels";
+NSString *audioSourceOutputChannelsKey = @"audioSourceOutputChannels";
+NSString *audioSourceDeviceIDKey = @"audioSourceDeviceID";
+NSString *audioSourceDeviceUIDKey = @"audioSourceDeviceUID";
+
+@synthesize sampleRate;
+@synthesize blockSize;
+
+NSMutableArray *devices;
+
++ (void)initDeviceDict
+{
+    // Variables used for each of the functions
+    UInt32 propertySize = 0;
+    Boolean writable = NO;
+    AudioObjectPropertyAddress property;
+    
+    // Get the size of the device IDs array
+    property.mSelector = kAudioHardwarePropertyDevices;
+    property.mScope    = kAudioObjectPropertyScopeGlobal;
+    property.mElement  = kAudioObjectPropertyElementMaster;
+    AudioObjectGetPropertyDataSize(kAudioObjectSystemObject,
+                                   &property, 0, NULL, &propertySize);
+    
+    // Create the array for device IDs
+    AudioDeviceID *deviceIDs = (AudioDeviceID *)malloc(propertySize);
+    
+    // Get the device IDs
+    AudioObjectGetPropertyData(kAudioObjectSystemObject,
+                               &property, 0, NULL,
+                               &propertySize, deviceIDs);
+    
+    NSUInteger numDevices = propertySize / sizeof(AudioDeviceID);
+    
+    // This is the array to hold the NSDictionaries
+    devices = [[NSMutableArray alloc] initWithCapacity:numDevices];
+    
+    // Get per-device information
+    for (int i = 0; i < numDevices; i++) {
+        NSMutableDictionary *deviceDict = [[NSMutableDictionary alloc] init];
+        [deviceDict setValue:[NSNumber numberWithInt:i]
+                      forKey:audioSourceDeviceIDKey];
+        
+        CFStringRef string;
+        
+        // Get the name of the audio device
+        property.mSelector = kAudioObjectPropertyName;
+        property.mScope    = kAudioObjectPropertyScopeGlobal;
+        property.mElement  = kAudioObjectPropertyElementMaster;
+        
+        propertySize = sizeof(string);
+        AudioObjectGetPropertyData(deviceIDs[i], &property, 0, NULL,
+                                   &propertySize, &string);
+        
+        // Even though it's probably OK to use the CFString as an NSString
+        // I'm going to make a copy, just to be safe.
+        NSString *deviceName = [(__bridge NSString *)string copy];
+        CFRelease(string);
+        
+        [deviceDict setValue:deviceName
+                      forKey:audioSourceNameKey];
+        
+        // Get the UID of the device, used by the audioQueue
+        property.mSelector = kAudioDevicePropertyDeviceUID;
+        propertySize = sizeof(string);
+        AudioObjectGetPropertyData(deviceIDs[i], &property, 0, NULL,
+                                   &propertySize, &string);
+        
+        // Again, copy to a NSString...
+        NSString *deviceUID = [(__bridge NSString *)string copy];
+        CFRelease(string);
+        
+        [deviceDict setValue:deviceUID
+                      forKey:audioSourceDeviceUIDKey];
+        
+        // Get the nominal sample rate
+        Float64 currentSampleRate = 0;
+        propertySize = sizeof(currentSampleRate);
+        AudioDeviceGetProperty(deviceIDs[i], 0, NO,
+                               kAudioDevicePropertyNominalSampleRate,
+                               &propertySize, &currentSampleRate);
+        
+        
+        [deviceDict setValue:[NSNumber numberWithFloat:currentSampleRate]
+                      forKey:audioSourceNominalSampleRateKey];
+        
+        // Get an array of sample rates
+        AudioValueRange *sampleRates;
+        AudioDeviceGetPropertyInfo(deviceIDs[i], 0, NO,
+                                   kAudioDevicePropertyAvailableNominalSampleRates,
+                                   &propertySize, &writable);
+        sampleRates = (AudioValueRange *)malloc(propertySize);
+        AudioDeviceGetProperty(deviceIDs[i], 0, NO,
+                               kAudioDevicePropertyAvailableNominalSampleRates,
+                               &propertySize, sampleRates);
+        
+        NSUInteger numSampleRates = propertySize / sizeof(AudioValueRange);
+        NSMutableArray *sampleRateTempArray = [[NSMutableArray alloc] init];
+        for (int j = 0; j < numSampleRates; j++) {
+            // An NSRange is a location and length...
+            NSRange sampleRange;
+            sampleRange.length   = sampleRates[j].mMaximum - sampleRates[j].mMinimum;
+            sampleRange.location = sampleRates[j].mMinimum;
+            
+            [sampleRateTempArray addObject:[NSValue valueWithRange:sampleRange]];
+        }
+        
+        // Create a immutable copy of the available sample rate array
+        // and store it into the NSDict
+        NSArray *tempArray = [sampleRateTempArray copy];
+        
+        [deviceDict setValue:tempArray
+                      forKey:audioSourceAvailableSampleRatesKey];
+        
+        free(sampleRates);
+        
+        // Get the number of output channels for the device
+        AudioBufferList bufferList;
+        propertySize = sizeof(bufferList);
+        AudioDeviceGetProperty(deviceIDs[i], 0, NO,
+                               kAudioDevicePropertyStreamConfiguration,
+                               &propertySize, &bufferList);
+        
+        int outChannels, inChannels;
+        if (bufferList.mNumberBuffers > 0) {
+            outChannels = bufferList.mBuffers[0].mNumberChannels;
+            [deviceDict setValue:[NSNumber numberWithInt:outChannels]
+                          forKey:audioSourceOutputChannelsKey];
+        } else {
+            [deviceDict setValue:[NSNumber numberWithInt:0]
+                          forKey:audioSourceOutputChannelsKey];
+        }
+        
+        // Again for input channels
+        propertySize = sizeof(bufferList);
+        AudioDeviceGetProperty(deviceIDs[i], 0, YES,
+                               kAudioDevicePropertyStreamConfiguration,
+                               &propertySize, &bufferList);
+        
+        // The number of channels is the number of buffers.
+        // The actual buffers are NULL.
+        if (bufferList.mNumberBuffers > 0) {
+            inChannels = bufferList.mBuffers[0].mNumberChannels;
+            [deviceDict setValue:[NSNumber numberWithInt:inChannels]
+                          forKey:audioSourceInputChannelsKey];
+        } else {
+            [deviceDict setValue:[NSNumber numberWithInt:0]
+                          forKey:audioSourceInputChannelsKey];
+        }
+        
+        // Add this new device dict to the array and release it
+        [devices addObject:deviceDict];
+    }
+}
+
++(NSArray *)deviceDict
+{
+    static dispatch_once_t dictOnceToken;
+    dispatch_once(&dictOnceToken, ^{
+        [CSDRAudioDevice initDeviceDict];});
+    
+    return devices;
+}
+
+- (void)unprepare
+{
+    return;
+}
+
+- (bool)prepare
+{
+    return NO;
+}
+
+- (bool)start
+{
+    return NO;
+}
+
+- (void)stop
+{
+    return;
+}
+
 - (id)init
 {
     self = [super init];
@@ -66,6 +253,8 @@ double subtractTimes(uint64_t end, uint64_t start);
     return _running;
 }
 
+
+
 @end
 
 @implementation CSDRAudioOutput
@@ -91,45 +280,55 @@ OSStatus OutputProc(void *inRefCon,
                     UInt32 inNumberFrames,
                     AudioBufferList * ioData)
 {
-    CSDRRingBuffer *ringBuffer = (__bridge CSDRRingBuffer *)inRefCon;
-    
-    // Load some data out of the ring buffer
-    [ringBuffer fetchFrames:inNumberFrames
-                       into:ioData];
-
-    // Copy the left channel to the right one
-    memcpy(ioData->mBuffers[1].mData,
-           ioData->mBuffers[0].mData,
-           ioData->mBuffers[1].mDataByteSize);
-    
-
-    static uint64_t last_buffer_time = 0;
-    static int lastFillLevel = 0;
-    
-    // Attempt to determine whether the buffer backlog is increasing
-    if (COCOARADIOAUDIO_AUDIOBUFFER_ENABLED()) {
-        uint64_t this_time = TimeStamp->mHostTime;
-        double deltaTime = subtractTimes(this_time, last_buffer_time);
+    @autoreleasepool {
+        CSDRAudioDevice *device = (__bridge CSDRAudioDevice *)inRefCon;
+        CSDRRingBuffer *ringBuffer = [device ringBuffer];
         
-        double derivedSampleRate = inNumberFrames / deltaTime;
-        
-        int deltaTime_us;
-        if (last_buffer_time == 0) {
-            deltaTime_us = 0;
-        } else {
-            deltaTime_us = deltaTime * 1000000;
+        // During a period of discontinuity, produce silence
+        if (device.discontinuity) {
+            bzero(ioData->mBuffers[0].mData, ioData->mBuffers[0].mDataByteSize);
+            bzero(ioData->mBuffers[1].mData, ioData->mBuffers[1].mDataByteSize);
+            return noErr;
         }
         
-        last_buffer_time = this_time;
+        // Load some data out of the ring buffer
+        [ringBuffer fetchFrames:inNumberFrames
+                           into:ioData];
         
-        int fillLevel = [ringBuffer fillLevel];
-        int deltaFillLevel = [ringBuffer fillLevel] - lastFillLevel;
-        lastFillLevel = fillLevel;
+        // Copy the left channel to the right one
+        memcpy(ioData->mBuffers[1].mData,
+               ioData->mBuffers[0].mData,
+               ioData->mBuffers[1].mDataByteSize);
         
-        COCOARADIOAUDIO_AUDIOBUFFER(fillLevel, (int)derivedSampleRate);
+        
+        static uint64_t last_buffer_time = 0;
+        static int lastFillLevel = 0;
+        
+        // Attempt to determine whether the buffer backlog is increasing
+        if (COCOARADIOAUDIO_AUDIOBUFFER_ENABLED()) {
+            uint64_t this_time = TimeStamp->mHostTime;
+            double deltaTime = subtractTimes(this_time, last_buffer_time);
+            
+            double derivedSampleRate = inNumberFrames / deltaTime;
+            
+            int deltaTime_us;
+            if (last_buffer_time == 0) {
+                deltaTime_us = 0;
+            } else {
+                deltaTime_us = deltaTime * 1000000;
+            }
+            
+            last_buffer_time = this_time;
+            
+            int fillLevel = [ringBuffer fillLevel];
+            //        int deltaFillLevel = [ringBuffer fillLevel] - lastFillLevel;
+            lastFillLevel = fillLevel;
+            
+            COCOARADIOAUDIO_AUDIOBUFFER((int)derivedSampleRate, fillLevel);
+        }
+        
+        return noErr;
     }
-    
-	return noErr;
 }
 
 + (size_t)bufferSizeWithDesc:(AudioStreamBasicDescription)ASBDesc
@@ -260,8 +459,8 @@ OSStatus OutputProc(void *inRefCon,
                                              Seconds:bufferDuration];
 
     // Calculate a seconds worth of data
-    int ringbufferSize = self.sampleRate * sizeof(float);
-    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:ringbufferSize];
+//    int ringbufferSize = self.sampleRate * sizeof(float);
+    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:self.sampleRate];
 //    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:19200];
 //    buffer = new_ringbuffer(ringbufferSize);
     
@@ -278,7 +477,7 @@ OSStatus OutputProc(void *inRefCon,
 // Setup the callback
     AURenderCallbackStruct output;
     output.inputProc = OutputProc;
-    output.inputProcRefCon = (__bridge void *)(ringBuffer);
+    output.inputProcRefCon = (__bridge void *)(self);
     	
 	AudioUnitSetProperty(auHAL,
                          kAudioUnitProperty_SetRenderCallback,
@@ -307,6 +506,7 @@ OSStatus OutputProc(void *inRefCon,
         return NO;
 
     _running = YES;
+    discontinuity = NO;
     
     AudioStreamBasicDescription deviceFormat;
     UInt32 size = sizeof(AudioStreamBasicDescription);
@@ -321,9 +521,38 @@ OSStatus OutputProc(void *inRefCon,
     return YES;
 }
 
+-(bool)discontinuity
+{
+    return discontinuity;
+}
+
+- (void)markDiscontinuity
+{
+    discontinuity = YES;
+    [ringBuffer clear];
+}
+
+- (CSDRRingBuffer *)ringBuffer
+{
+    return ringBuffer;
+}
+
 -(void)bufferData:(NSData *)data
 {
     [ringBuffer storeData:data];
+
+    // If it's not started yet, wait until the ringbuffer is half
+    // full, then start it.
+    if (!self.running) {
+        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] / 2)) {
+            [self start];
+        }
+    } else if (discontinuity) {
+        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] / 2)) {
+            discontinuity = false;
+        }
+    }
+    
     return;
     
 }

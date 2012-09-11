@@ -20,10 +20,13 @@
 }
 
 @property (readonly) int fillLevel;
+@property (readonly) int capacity;
 
 - (id)initWithCapacity:(NSInteger)cap;
 
 - (void)storeData:(NSData *)data;
 - (void)fetchFrames:(int)nFrames into:(AudioBufferList *)ioData;
 
+// Discard the contents
+- (void)clear;
 @end
