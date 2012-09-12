@@ -106,8 +106,6 @@
 		3C75F1DD159393700071DE3F /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ShaderProgram.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		3C75F1DE159393700071DE3F /* ShaderProgram.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ShaderProgram.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C75F1E01593C7A90071DE3F /* spectrumShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = spectrumShader.frag; sourceTree = "<group>"; };
-		3C7CAAEC15BDA04500E78D83 /* AudioDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioDevice.h; sourceTree = "<group>"; };
-		3C7CAAED15BDA04500E78D83 /* AudioDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioDevice.m; sourceTree = "<group>"; };
 		3C7CAAF115BDC08F00E78D83 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		3C7CAB1515BDC51900E78D83 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		3C7CAB1815BDC53600E78D83 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
@@ -273,8 +271,6 @@
 		3C7CAAEB15BDA01900E78D83 /* Audio */ = {
 			isa = PBXGroup;
 			children = (
-				3C7CAAEC15BDA04500E78D83 /* AudioDevice.h */,
-				3C7CAAED15BDA04500E78D83 /* AudioDevice.m */,
 				3CE31D6B15F013DB00F0123B /* CSDRAudioDevice.h */,
 				3CE31D6C15F013DB00F0123B /* CSDRAudioDevice.m */,
 				3CE31DB115F12E3800F0123B /* CSDRRingBuffer.h */,
