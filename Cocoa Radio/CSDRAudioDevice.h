@@ -26,7 +26,7 @@
     AudioComponentDescription desc;
     AudioComponentInstance auHAL;
     
-    size_t bufferSize;
+//    size_t bufferSize;
     
     CSDRRingBuffer *ringBuffer;
 
@@ -53,6 +53,7 @@
 @property (readwrite) int blockSize;
 @property (readonly) bool running;
 @property (readwrite) int deviceID;
+@property (readwrite) bool mute;
 
 @end
 

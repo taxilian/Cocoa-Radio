@@ -141,38 +141,38 @@ NSMutableArray *devices;
         free(sampleRates);
         
         // Get the number of output channels for the device
-        AudioBufferList bufferList;
-        propertySize = sizeof(bufferList);
-        AudioDeviceGetProperty(deviceIDs[i], 0, NO,
-                               kAudioDevicePropertyStreamConfiguration,
-                               &propertySize, &bufferList);
+//        AudioBufferList bufferList;
+//        propertySize = sizeof(bufferList);
+//        AudioDeviceGetProperty(deviceIDs[i], 0, NO,
+//                               kAudioDevicePropertyStreamConfiguration,
+//                               &propertySize, &bufferList);
         
-        int outChannels, inChannels;
-        if (bufferList.mNumberBuffers > 0) {
-            outChannels = bufferList.mBuffers[0].mNumberChannels;
-            [deviceDict setValue:[NSNumber numberWithInt:outChannels]
-                          forKey:audioSourceOutputChannelsKey];
-        } else {
-            [deviceDict setValue:[NSNumber numberWithInt:0]
-                          forKey:audioSourceOutputChannelsKey];
-        }
+//        int outChannels, inChannels;
+//        if (bufferList.mNumberBuffers > 0) {
+//            outChannels = bufferList.mBuffers[0].mNumberChannels;
+//            [deviceDict setValue:[NSNumber numberWithInt:outChannels]
+//                          forKey:audioSourceOutputChannelsKey];
+//        } else {
+//            [deviceDict setValue:[NSNumber numberWithInt:0]
+//                          forKey:audioSourceOutputChannelsKey];
+//        }
         
         // Again for input channels
-        propertySize = sizeof(bufferList);
-        AudioDeviceGetProperty(deviceIDs[i], 0, YES,
-                               kAudioDevicePropertyStreamConfiguration,
-                               &propertySize, &bufferList);
+//        propertySize = sizeof(bufferList);
+//        AudioDeviceGetProperty(deviceIDs[i], 0, YES,
+//                               kAudioDevicePropertyStreamConfiguration,
+//                               &propertySize, &bufferList);
         
         // The number of channels is the number of buffers.
         // The actual buffers are NULL.
-        if (bufferList.mNumberBuffers > 0) {
-            inChannels = bufferList.mBuffers[0].mNumberChannels;
-            [deviceDict setValue:[NSNumber numberWithInt:inChannels]
-                          forKey:audioSourceInputChannelsKey];
-        } else {
-            [deviceDict setValue:[NSNumber numberWithInt:0]
-                          forKey:audioSourceInputChannelsKey];
-        }
+//        if (bufferList.mNumberBuffers > 0) {
+//            inChannels = bufferList.mBuffers[0].mNumberChannels;
+//            [deviceDict setValue:[NSNumber numberWithInt:inChannels]
+//                          forKey:audioSourceInputChannelsKey];
+//        } else {
+//            [deviceDict setValue:[NSNumber numberWithInt:0]
+//                          forKey:audioSourceInputChannelsKey];
+//        }
         
         // Add this new device dict to the array and release it
         [devices addObject:deviceDict];
@@ -259,20 +259,6 @@ NSMutableArray *devices;
 
 @implementation CSDRAudioOutput
 
-AudioBufferList *theBufferList;
-
-OSStatus AudioUnitRender (AudioUnit                   inUnit,
-                          AudioUnitRenderActionFlags  *ioActionFlags,
-                          const AudioTimeStamp        *inTimeStamp,
-                          UInt32                      inOutputBusNumber,
-                          UInt32                      inNumberFrames,
-                          AudioBufferList             *ioData)
-{
-    
-    
-    return noErr;
-}
-
 OSStatus OutputProc(void *inRefCon,
                     AudioUnitRenderActionFlags *ioActionFlags,
                     const AudioTimeStamp *TimeStamp,
@@ -295,15 +281,7 @@ OSStatus OutputProc(void *inRefCon,
         [ringBuffer fetchFrames:inNumberFrames
                            into:ioData];
         
-        // Copy the left channel to the right one
-        memcpy(ioData->mBuffers[1].mData,
-               ioData->mBuffers[0].mData,
-               ioData->mBuffers[1].mDataByteSize);
-        
-        
         static uint64_t last_buffer_time = 0;
-        static int lastFillLevel = 0;
-        
         // Attempt to determine whether the buffer backlog is increasing
         if (COCOARADIOAUDIO_AUDIOBUFFER_ENABLED()) {
             uint64_t this_time = TimeStamp->mHostTime;
@@ -321,27 +299,22 @@ OSStatus OutputProc(void *inRefCon,
             last_buffer_time = this_time;
             
             int fillLevel = [ringBuffer fillLevel];
-            //        int deltaFillLevel = [ringBuffer fillLevel] - lastFillLevel;
-            lastFillLevel = fillLevel;
-            
             COCOARADIOAUDIO_AUDIOBUFFER((int)derivedSampleRate, fillLevel);
         }
+
+        if (device.mute) {
+            bzero(ioData->mBuffers[0].mData, ioData->mBuffers[0].mDataByteSize);
+            bzero(ioData->mBuffers[1].mData, ioData->mBuffers[1].mDataByteSize);
+            return noErr;
+        }
+
+        // Copy the left channel to the right one
+        memcpy(ioData->mBuffers[1].mData,
+               ioData->mBuffers[0].mData,
+               ioData->mBuffers[1].mDataByteSize);
         
         return noErr;
     }
-}
-
-+ (size_t)bufferSizeWithDesc:(AudioStreamBasicDescription)ASBDesc
-                     Seconds:(Float64)seconds
-{
-    UInt32 outBufferSize = 0;
-    static const int maxBufferSize = 0x50000;
-    
-    int maxPacketSize = ASBDesc.mBytesPerPacket;
-    Float64 numBytesForTime = ASBDesc.mSampleRate * maxPacketSize * seconds;
-    outBufferSize = (UInt32)(numBytesForTime < maxBufferSize ? numBytesForTime : maxBufferSize);
-    
-    return outBufferSize;
 }
 
 - (id)init
@@ -418,7 +391,7 @@ OSStatus OutputProc(void *inRefCon,
     desiredFormat.mFormatFlags = kLinearPCMFormatFlagIsFloat |
                                  kLinearPCMFormatFlagIsPacked;
     
-    //set format to output scope
+//set format to output scope
     AudioUnitSetProperty(auHAL,
                          kAudioUnitProperty_StreamFormat,
                          kAudioUnitScope_Output,
@@ -428,6 +401,7 @@ OSStatus OutputProc(void *inRefCon,
 
     UInt32 size = sizeof(AudioStreamBasicDescription);
     
+// Attempt to set the sample rate (so far, this isn't working)
     OSStatus err =noErr;
     Float64 trySampleRate = self.sampleRate;
     err = AudioUnitSetProperty(auHAL,
@@ -445,7 +419,7 @@ OSStatus OutputProc(void *inRefCon,
                                &trySampleRate,
                                &size);
     
-    //Get the input device format
+//Get the device format back
     AudioUnitGetProperty (auHAL,
                           kAudioUnitProperty_StreamFormat,
                           kAudioUnitScope_Output,
@@ -453,27 +427,9 @@ OSStatus OutputProc(void *inRefCon,
                           &deviceFormat,
                           &size);
     
-// Get the buffer size
-    float bufferDuration = (float)self.blockSize / (float)self.sampleRate;
-    bufferSize = [CSDRAudioOutput bufferSizeWithDesc:deviceFormat
-                                             Seconds:bufferDuration];
-
-    // Calculate a seconds worth of data
-//    int ringbufferSize = self.sampleRate * sizeof(float);
-    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:self.sampleRate];
-//    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:19200];
-//    buffer = new_ringbuffer(ringbufferSize);
+// Create a ring buffer for the audio
+    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:self.sampleRate/8];
     
-// allocate the AudioBufferList and two AudioBuffers:
-    theBufferList = (AudioBufferList *)malloc(offsetof(AudioBufferList, mBuffers[2]));
-    theBufferList->mNumberBuffers = 2;
-    theBufferList->mBuffers[0].mNumberChannels = 1;
-    theBufferList->mBuffers[0].mData =  malloc(bufferSize);
-    theBufferList->mBuffers[0].mDataByteSize = (UInt32)bufferSize;
-    theBufferList->mBuffers[1].mNumberChannels = 1;
-    theBufferList->mBuffers[1].mData =  malloc(bufferSize);
-    theBufferList->mBuffers[1].mDataByteSize = (UInt32)bufferSize;
-
 // Setup the callback
     AURenderCallbackStruct output;
     output.inputProc = OutputProc;
@@ -498,24 +454,23 @@ OSStatus OutputProc(void *inRefCon,
     
     OSStatus err = noErr;
     err = AudioUnitInitialize(auHAL);
-    if(err)
-        return NO;
+    if(err) return NO;
 
     err = AudioOutputUnitStart(auHAL);
-    if(err)
-        return NO;
+    if(err) return NO;
 
     _running = YES;
     discontinuity = NO;
-    
-    AudioStreamBasicDescription deviceFormat;
-    UInt32 size = sizeof(AudioStreamBasicDescription);
-    AudioUnitGetProperty (auHAL,
-                          kAudioUnitProperty_StreamFormat,
-                          kAudioUnitScope_Output,
-                          1,
-                          &deviceFormat,
-                          &size);
+
+// Get the basic description (again!) to see if the sample rate is still wrong (it is)
+//    AudioStreamBasicDescription deviceFormat;
+//    UInt32 size = sizeof(AudioStreamBasicDescription);
+//    AudioUnitGetProperty (auHAL,
+//                          kAudioUnitProperty_StreamFormat,
+//                          kAudioUnitScope_Output,
+//                          1,
+//                          &deviceFormat,
+//                          &size);
 
     
     return YES;
