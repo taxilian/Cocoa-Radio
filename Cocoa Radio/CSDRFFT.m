@@ -20,6 +20,15 @@
 {
     self = [super init];
     if (self) {
+        // Integer ivars
+        counter = 0;
+        size = initSize;
+        log2n = log2(size);
+        if (exp2(log2n) != size) {
+            NSLog(@"Non power of 2 input size provided!");
+            return nil;
+        }
+
         // Allocate buffers
         realBuffer = malloc(sizeof(double) * initSize);
         imagBuffer = malloc(sizeof(double) * initSize);
@@ -27,15 +36,14 @@
         // Magnitude data
         magBuffer = [[NSMutableData alloc] initWithLength:sizeof(float) * initSize];
         
-        // Integer ivars
-        size = initSize;
-        counter = 0;
-        
-        // Processing thread
+        // Processing synchronization and thread
         ringCondition = [[NSCondition alloc] init];
+        [ringCondition setName:@"FFT Ring buffer condition"];
+
         fftThread = [[NSThread alloc] initWithTarget:self
                                             selector:@selector(fftLoop)
                                               object:nil];
+        [fftThread setName:@"com.us.alternet.cocoaradio.fftthread"];
         [fftThread start];
 
         // Ring buffers
@@ -47,65 +55,33 @@
     return self;
 }
 
-- (void)convertFFTandAccumulate:(NSDictionary *)inDict
-{
-    NSMutableData *real = inDict[@"real"];
-    NSMutableData *imag = inDict[@"imag"];
-    
-    //    const float *realData = (const float *)[real bytes];
-    //    const float *imagData = (const float *)[imag bytes];
-    float *realData = [real mutableBytes];
-    float *imagData = [imag mutableBytes];
-    
-    for (int i = 0; i < size; i++) {
-        realData[i] = (float)i / (float)size;
-        imagData[i] = (float)(size-i) / (float)size;
-    }
-    
-    // The format of the frequency data is:
-    
-    //  Positive frequencies  | Negative frequencies
-    //  [DC][1][2]...[n/2][NY]|[n/2]...[2][1]  real array
-    //  [DC][1][2]...[n/2][NY]|[n/2]...[2][1]  imag array
-    
-    // We want the order to be negative frequencies first (descending)
-    // And positive frequencies last (ascending)
-    
-    // Accumulate this data with what came before it, and re-order the values
-    for (int i = 0; i <= (size/2); i++) {
-        realBuffer[i] += realData[i + (size/2)];
-        imagBuffer[i] += imagData[i + (size/2)];
-        //        realBuffer[i] = realData[i + (width/2)];
-        //        imagBuffer[i] = imagData[i + (width/2)];
-    }
-    
-    for (int i = 0; i <  (size/2); i++) {
-        realBuffer[i + (size/2)] += realData[i];
-        imagBuffer[i + (size/2)] += imagData[i];
-        //        realBuffer[i + (width/2)] = realData[i];
-        //        imagBuffer[i + (width/2)] = imagData[i];
-    }
-}
-
 // This function retreives the current FFT data
 // It finalizes the number of FFT operations and divides out the average
 - (void)updateMagnitudeData
 {
     float *magValues = [magBuffer mutableBytes];
 
+    if (counter == 0) {
+        return;
+    }
+    
     for (int i = 0; i < size; i++) {
         // Compute the average
         double real = realBuffer[i] / counter;
         double imag = imagBuffer[i] / counter;
         
-//        real = (double)i / size.;
-//        imag = (double)(size - i) / size.;
+//        real = (double)i / size;
+//        imag = (double)(size - i) / size;
         
         // Compute the magnitude and put it in the mag array
         magValues[i] = sqrt((real * real) + (imag * imag));
         magValues[i] = log10(magValues[i]);
         
-//        magValues[i] = (float)i / size.;
+//        magValues[i] = (float)i / (float)size;
+    }
+
+    if (COCOARADIO_FFTCOUNTER_ENABLED()) {
+        COCOARADIO_FFTCOUNTER(counter);
     }
 
     counter = 0;
@@ -122,8 +98,10 @@
 - (void)fftLoop
 {
     @autoreleasepool {
-        NSMutableData *realData = [[NSMutableData alloc] initWithCapacity:2048 * sizeof(float)];
-        NSMutableData *imagData = [[NSMutableData alloc] initWithCapacity:2048 * sizeof(float)];
+        NSMutableData *inputRealData =  [[NSMutableData alloc] initWithLength:2048 * sizeof(float)];
+        NSMutableData *inputImagData =  [[NSMutableData alloc] initWithLength:2048 * sizeof(float)];
+        NSMutableData *outputRealData = [[NSMutableData alloc] initWithLength:2048 * sizeof(float)];
+        NSMutableData *outputImagData = [[NSMutableData alloc] initWithLength:2048 * sizeof(float)];
         
         // This is the threads "forever loop"
         do {
@@ -132,27 +110,27 @@
                 [ringCondition lock];
                 if ([realRingBuffer fillLevel] < 2048 ||
                     [imagRingBuffer fillLevel] < 2048) {
+                    [self updateMagnitudeData];
                     [ringCondition wait];
                 }
                 
                 // Fill the imag and real arrays with data
-                [realRingBuffer fillData:realData];
-                [imagRingBuffer fillData:imagData];
+                [realRingBuffer fillData:inputRealData];
+                [imagRingBuffer fillData:inputImagData];
                 [ringCondition unlock];
                 
                 // Perform the FFT
-                NSDictionary *fftResult = complexFFTOnDict(@{ @"real" : realData,
-                                                              @"imag" : imagData});
+                [self complexFFTinputReal:inputRealData
+                                inputImag:inputImagData
+                               outputReal:outputRealData
+                               outputImag:outputImagData];
                 
                 // Convert the FFT format and accumulate
-                [self convertFFTandAccumulate:fftResult];
+                [self convertFFTandAccumulateReal:outputRealData
+                                             imag:outputImagData];
                 
                 // Advance the accumulation counter
                 counter++;
-                
-                if (COCOARADIO_FFTCOUNTER_ENABLED()) {
-                    COCOARADIO_FFTCOUNTER(counter);
-                }
             }
         } while (true);
     }
@@ -160,24 +138,25 @@
 
 - (void)addSamplesReal:(NSData *)real imag:(NSData *)imag
 {
+    [ringCondition lock];
     
+    [realRingBuffer storeData:real];
+    [imagRingBuffer storeData:imag];
+    
+    [ringCondition signal];
+    [ringCondition unlock];
 }
 
-// This function takes an input dictionary with a real and imaginary
-// key that contains an NSData encapsulated array of floats.
-// There are input samples, each is a full complex number.
-// The output is also complex numbers in interleaved format.
-// The desired output is the posative/negative frequency format
-//- (NSDictionary *)complexFFTOnData:(NSDictionary *)inData
-//
-// The number of input samples must be a power of two.
-//
-NSDictionary * complexFFTOnDict(NSDictionary *inDict)
+- (void)complexFFTinputReal:(NSData *)inReal
+                  inputImag:(NSData *)inImag
+                 outputReal:(NSMutableData *)outReal
+                 outputImag:(NSMutableData *)outImag
 {
+    // Setup the Accelerate framework FFT engine
     static FFTSetup setup = NULL;
     if (setup == NULL) {
         // Setup the FFT system (accelerate framework)
-        setup = vDSP_create_fftsetup(11, FFT_RADIX2);
+        setup = vDSP_create_fftsetup(log2n, FFT_RADIX2);
         if (setup == NULL)
         {
             printf("\nFFT_Setup failed to allocate enough memory.\n");
@@ -185,38 +164,78 @@ NSDictionary * complexFFTOnDict(NSDictionary *inDict)
         }
     }
     
+    // Check that the inputs are the right size
+    int length = size * sizeof(float);
+    if ([inReal length]  != length ||
+        [inImag length]  != length ||
+        [outReal length] != length ||
+        [outImag length] != length) {
+        NSLog(@"At least one input to the FFT is the wrong size");
+        return;
+    }
+    
     // There aren't (to my knowledge) any const versions of this class
     // therefore, we have to cast with the knowledge that these arrays
     // are really consts.
     COMPLEX_SPLIT input;
-    input.realp  = (float *)[inDict[@"real"] bytes];
-    input.imagp  = (float *)[inDict[@"imag"] bytes];
+    input.realp  = (float *)[inReal bytes];
+    input.imagp  = (float *)[inImag bytes];
     
-    // Allocate memory for the output operands and check its availability.
-    // Results data are 2048 floats (I and Q)
-    NSMutableData *realData = [[NSMutableData alloc] initWithLength:sizeof(float) * 2048];
-    NSMutableData *imagData = [[NSMutableData alloc] initWithLength:sizeof(float) * 2048];
-    COMPLEX_SPLIT result;
-    result.realp  = (float *)[realData mutableBytes];
-    result.imagp  = (float *)[imagData mutableBytes];
+    COMPLEX_SPLIT output;
+    output.realp  = (float *)[outReal mutableBytes];
+    output.imagp  = (float *)[outImag mutableBytes];
     
-    if(result.realp == NULL || result.imagp == NULL ) {
-        printf( "\nmalloc failed to allocate memory for the FFT.\n");
-        return nil;
+    // Make sure that the arrays are accessible
+    if (output.realp == NULL || output.imagp == NULL ||
+        input.realp  == NULL || input.imagp  == NULL) {
+        NSLog(@"Unable to access memory in the FFT function");
+        return;
     }
     
-    // Find the number log2 number of samples
-    vDSP_fft_zop(setup, &input, 1, &result, 1, 11, FFT_FORWARD );
+    // Perform the FFT
+    vDSP_fft_zop(setup, &input, 1, &output, 1, log2n, FFT_FORWARD );
 
 //    int width = [inDict[@"real"] length] / sizeof(float);
 //    for (int i = 0; i < width; i++) {
 //        result.realp[i] = (float)i / (float)width;
 //        result.imagp[i] = (float)(width-i) / (float)width;
 //    }
+}
+
+- (void)convertFFTandAccumulateReal:(NSMutableData *)real
+                               imag:(NSMutableData *)imag
+{
+    float *realData = [real mutableBytes];
+    float *imagData = [imag mutableBytes];
     
-    // Return the results
-    return @{ @"real" : realData,
-              @"imag" : imagData };
+//    for (int i = 0; i < size; i++) {
+//        realData[i] = (float)i / (float)size;
+//        imagData[i] = (float)(size-i) / (float)size;
+//    }
+    
+    // The format of the frequency data is:
+    
+    //  Positive frequencies  | Negative frequencies
+    //  [DC][1][2]...[n/2][NY]|[n/2]...[2][1]  real array
+    //  [DC][1][2]...[n/2][NY]|[n/2]...[2][1]  imag array
+    
+    // We want the order to be negative frequencies first (descending)
+    // And positive frequencies last (ascending)
+    
+    // Accumulate this data with what came before it, and re-order the values
+    for (int i = 0; i <= (size/2); i++) {
+        realBuffer[i] += realData[i + (size/2)];
+        imagBuffer[i] += imagData[i + (size/2)];
+//        realBuffer[i] = realData[i + (size/2)];
+//        imagBuffer[i] = imagData[i + (size/2)];
+    }
+    
+    for (int i = 0; i <  (size/2); i++) {
+        realBuffer[i + (size/2)] += realData[i];
+        imagBuffer[i + (size/2)] += imagData[i];
+//        realBuffer[i + (size/2)] = realData[i];
+//        imagBuffer[i + (size/2)] = imagData[i];
+    }
 }
 
 @end

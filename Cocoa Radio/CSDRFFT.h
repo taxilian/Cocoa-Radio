@@ -16,6 +16,7 @@
     
     int counter;
     int size;
+    int log2n;
     
     NSMutableData *magBuffer;
     
