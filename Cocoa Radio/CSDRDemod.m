@@ -29,13 +29,20 @@
         // Set default sample rates (this will set decimation and interpolation)
         _rfSampleRate = 2048000;
         _rfCorrectedRate = 2048000;
+        IFFilter.sampleRate = 2048000;
+        
         self.afSampleRate = 44100;
-
+        AFFilter.sampleRate = 44100;
+        
         self.ifBandwidth  = 90000;
         self.ifSkirtWidth = 20000;
+        IFFilter.bandwidth  = 90000;
+        IFFilter.skirtWidth = 20000;
 
-        self.afBandwidth  = 24000;
-        self.afSkirtWidth = 20000;
+        self.afBandwidth  = 21500;
+        self.afSkirtWidth = 10000;
+        AFFilter.bandwidth  = self.afSampleRate / 2.;
+        AFFilter.skirtWidth = 10000;
     }
     
     return self;
@@ -44,6 +51,19 @@
 - (NSData *)demodulateData:(NSDictionary *)complexInput
 {
     NSLog(@"Demodulating in the base class!");
+    
+    return nil;
+}
+
++ (CSDRDemod *)demodulatorWithScheme:(NSString *)scheme
+{
+    if ([scheme caseInsensitiveCompare:@"WBFM"] == NSOrderedSame) {
+        return [[CSDRDemodWBFM alloc] init];
+    }
+
+    if ([scheme caseInsensitiveCompare:@"NBFM"] == NSOrderedSame) {
+        return [[CSDRDemodNBFM alloc] init];
+    }
     
     return nil;
 }
@@ -156,10 +176,59 @@ int gcd(int a, int b) {
     return [AFFilter skirtWidth];
 }
 
+- (float)rfGain
+{
+    return [IFFilter gain];
+}
+
+- (void)setRfGain:(float)rfGain
+{
+    [IFFilter setGain:rfGain];
+}
+
+- (float)afGain
+{
+    return [AFFilter gain];
+}
+
+- (void)setAfGain:(float)afGain
+{
+    [AFFilter setGain:afGain];
+}
+
+- (float)ifMaxBandwidth
+{
+    return 100000000;
+}
+
+- (float)ifMinBandwidth
+{
+    return      1000;
+}
+
+- (float)afMaxBandwidth
+{
+    return _afSampleRate / 2.;
+}
+
+- (float)afMinBandwidth
+{
+    return 1000;
+}
+
 @end
 
 #pragma mark -
-@implementation CSDRDemodFM
+@implementation CSDRDemodWBFM
+
+- (id)init
+{
+    self = [super init];
+    if (self) {
+    }
+    
+    return self;
+}
 
 - (NSData *)demodulateData:(NSDictionary *)complexInput
 {
@@ -184,6 +253,71 @@ int gcd(int a, int b) {
     audio = [AFResampler resample:audioFiltered];
         
     return audio;
+}
+
+// Override the defaults as appropriate for WBFM
+- (float)ifMaxBandwidth
+{
+    return  100000;
+}
+
+- (float)ifMinBandwidth
+{
+    return   50000;
+}
+
+@end
+
+@implementation CSDRDemodNBFM
+
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        self.ifBandwidth  = 25000;
+        self.ifSkirtWidth = 10000;
+        
+        self.afBandwidth  = self.afSampleRate / 2.;
+        self.afSkirtWidth = 10000;
+    }
+    
+    return self;
+}
+
+- (NSData *)demodulateData:(NSDictionary *)complexInput
+{
+    // Down convert
+    NSDictionary *baseBand;
+    baseBand = freqXlate(complexInput, self.centerFreq, self.rfSampleRate);
+    
+    // Low-pass filter
+    NSDictionary *filtered;
+    filtered = [IFFilter filterDict:baseBand];
+    
+    // Quadrature demodulation
+    NSData *demodulated;
+    demodulated = quadratureDemod(filtered, 1., 0.);
+    
+    // Audio Frequency filter
+    NSData *audioFiltered;
+    audioFiltered = [AFFilter filterData:demodulated];
+    
+    // Rational resampling
+    NSData *audio;
+    audio = [AFResampler resample:audioFiltered];
+    
+    return audio;
+}
+
+// Override the defaults as appropriate for NBFM (picks up after WBFM)
+- (float)ifMaxBandwidth
+{
+    return  50000;
+}
+
+- (float)ifMinBandwidth
+{
+    return   5000;
 }
 
 @end

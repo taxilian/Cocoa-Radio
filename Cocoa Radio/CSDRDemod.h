@@ -29,9 +29,13 @@
 
 @property (readwrite) float centerFreq;
 
+@property (readonly)  float ifMinBandwidth;
+@property (readonly)  float ifMaxBandwidth;
 @property (readwrite) float ifBandwidth;
 @property (readwrite) float ifSkirtWidth;
 
+@property (readonly)  float afMinBandwidth;
+@property (readonly)  float afMaxBandwidth;
 @property (readwrite) float afBandwidth;
 @property (readwrite) float afSkirtWidth;
 
@@ -40,7 +44,12 @@
 
 - (NSData *)demodulateData:(NSDictionary *)complexInput;
 
++ (CSDRDemod *)demodulatorWithScheme:(NSString *)scheme;
+
 @end
 
-@interface CSDRDemodFM : CSDRDemod
+@interface CSDRDemodWBFM : CSDRDemod
+@end
+
+@interface CSDRDemodNBFM : CSDRDemod
 @end
