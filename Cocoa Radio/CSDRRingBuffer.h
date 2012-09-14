@@ -26,6 +26,7 @@
 
 - (void)storeData:(NSData *)data;
 - (void)fetchFrames:(int)nFrames into:(AudioBufferList *)ioData;
+- (void)fillData:(NSMutableData *)data;
 
 // Discard the contents
 - (void)clear;
