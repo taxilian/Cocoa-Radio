@@ -8,63 +8,49 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class RTLSDRDevice;
-
+// Forward declaration of classes
 @class CSDRSpectrumView;
 @class CSDRWaterfallView;
-
 @class CSDRDemod;
-
-//@class AudioSink;
+@class CSDRFFT;
 @class CSDRAudioOutput;
-
-#import "NetworkServer.h"
-#import "NetworkSession.h"
+@class CSDRRingBuffer;
 
 #import <rtl-sdr/RTLSDRDevice.h>
 
-#ifndef CSDRAPPDELEGATE_M
-extern NSString *CocoaSDRRawDataNotification;
-extern NSString *CocoaSDRFFTDataNotification;
-extern NSString *CocoaSDRBaseBandNotification;
-extern NSString *CocoaSDRAudioDataNotification;
-#endif
-
-@interface CSDRAppDelegate : NSObject <NSApplicationDelegate>//, NetworkServerDelegate, NetworkSessionDelegate>
+@interface CSDRAppDelegate : NSObject <NSApplicationDelegate>
 {
     // This is the dongle class (we also need to maintain a reference to the async block)
     RTLSDRDevice *device;
     RTLSDRAsyncBlock block;
     
-    // This thread is for the loop that reads from the dongle
-    NSThread *readThread;
-
     // This is the sample rate of the dongle
+    // and the sample rate of the audio device
     int rfSampleRate;
-
-    // This is the sample rate of the audio device
     int afSampleRate;
     
     // These classes are the audio output device and the SDR algorithm
     CSDRAudioOutput *audioOutput;
     CSDRDemod *demodulator;
+    NSString *_demodulationScheme;
+    NSLock *demodulatorLock;
     
-    // This is for network debugging (i.e. GNU Radio)
-    NetworkServer *netServer;
-    NSMutableArray *sessions;
-    
-    NSDictionary *fftBufferDict;
-
-    // This is for file debugging (i.e. Audacity, or GNU Radio)
-    NSMutableData *outData;
+    // View helpers
+    CSDRFFT *fftProcessor;
+    NSTimer *viewTimer;
 }
 
 @property (readwrite) IBOutlet NSWindow *window;
 @property (readwrite) IBOutlet NSTextField *tuningField;
 @property (readwrite) IBOutlet NSTextField *loField;
+@property (readwrite) IBOutlet NSComboBox *demodulatorSelector;
 
 @property (readwrite) IBOutlet CSDRSpectrumView  *spectrumView;
 @property (readwrite) IBOutlet CSDRWaterfallView *waterfallView;
+@property (readonly)  CSDRDemod *demodulator;
+@property (readonly)  CSDRAudioOutput *audioOutput;
+
+@property (readwrite) NSString *demodulationScheme;
 
 @property (readwrite) float bottomValue;
 @property (readwrite) float range;
@@ -73,7 +59,7 @@ extern NSString *CocoaSDRAudioDataNotification;
 @property (readwrite) float tuningValue;
 @property (readwrite) float loValue;
 
-@property (readonly)  CSDRDemod *demodulator;
 
+@property (readonly)  NSData *fftData;
 
 @end

@@ -12,14 +12,13 @@
 
 #import <mach/mach_time.h>
 
-#import "CSDRSpectrumView.h"
-#import "CSDRWaterfallView.h"
-#import "dspRoutines.h"
-
-//#import "AudioDevice.h"
 #import "CSDRAudioDevice.h"
 #import "CSDRRingBuffer.h"
+#import "CSDRSpectrumView.h"
+#import "CSDRWaterfallView.h"
+#import "CSDRFFT.h"
 
+#import "dspRoutines.h"
 #import "delegateprobes.h"
 
 // This block size sets the frequency that the read loop runs
@@ -27,189 +26,13 @@
 #define SAMPLERATE 2000000
 #define BLOCKSIZE    40960
 
-NSString *CocoaSDRRawDataNotification   = @"CocoaSDRRawDataNotification";
-NSString *CocoaSDRFFTDataNotification   = @"CocoaSDRFFTDataNotification";
-NSString *CocoaSDRBaseBandNotification  = @"CocoaSDRBaseBandNotification";
-NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
-
 @implementation CSDRAppDelegate
 
 @synthesize window = _window;
 
-- (void)fftBlock:(NSDictionary *)inDict
-{
-    NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-
-    static float cumulative_remainder = 0.;
-
-    NSData *realData = inDict[@"real"];
-    NSData *imagData = inDict[@"imag"];
-    
-    // Split the block size into 2048-sized chunks.
-    // Careful attention must be paid to ensure that the
-    // correct amount of data is used for each frame period.
-    
-    int ffts = BLOCKSIZE / 2048;
-    if (ffts * 2048 != BLOCKSIZE) {
-        NSLog(@"The block size isn't an even multiple of 2048.");
-        [NSApp close];
-    }
-    
-    // FFT intervale and cumulative time
-    float interval = 2048. / (float)SAMPLERATE;
-    float cumulative = cumulative_remainder;
-    
-    // For each 2048 sample block, perform the FFT (to average)
-    for (int i = 0; i < ffts; i++) {
-        int size = 2048 * sizeof(float);
-        NSRange range = NSMakeRange(i * size, size);
-        NSData *subsetReal = [realData subdataWithRange:range];
-        NSData *subsetImag = [imagData subdataWithRange:range];
-        
-        NSDictionary *complexRaw = @{ @"real" : subsetReal,
-        @"imag" : subsetImag };
-        
-        // Perform the FFT
-        NSDictionary *fftDict = complexFFTOnDict(complexRaw);
-        
-        // Convert the FFT format and average
-        convertFFTandAverage(fftDict, fftBufferDict);
-        
-        // Attempt to track the cumulative time that the
-        // data represents.  Whenever it crosses a frame
-        // interval (assume 1/60 seconds) send the data
-        // to the UI and reset the averages.
-        cumulative += interval;
-        if (cumulative >= (1./60.)) {
-            // Process the data
-            [center postNotificationName:CocoaSDRFFTDataNotification
-                                  object:fftBufferDict];
-            
-            // Discard the averaged data
-            [fftBufferDict[@"real"] resetBytesInRange:NSMakeRange(0, 2048 * sizeof(float))];
-            [fftBufferDict[@"imag"] resetBytesInRange:NSMakeRange(0, 2048 * sizeof(float))];
-            
-            // Sleep for the duration (move from seconds to microseconds)
-            usleep(cumulative * 1000000.);
-            
-            // Keep the cumulative interval greater than 1/60th of a second.
-            cumulative = cumulative - (1./60.);
-            
-//            if (COCOARADIO_FFTCOUNTER_ENABLED()) {
-//                COCOARADIO_FFTCOUNTER(cumulative * 100000);
-//            }
-        }
-    }
-    
-    cumulative_remainder = cumulative;
-}
-
-- (void)readLoop
-{
-    __block int prebuffer = 2;
-
-    NSMutableData *zeros = [[NSMutableData alloc] initWithLength:BLOCKSIZE * 2];
-    
-    NSMutableData *tempReal = [[NSMutableData alloc] initWithLength:BLOCKSIZE * sizeof(float)];
-    NSMutableData *tempImag = [[NSMutableData alloc] initWithLength:BLOCKSIZE * sizeof(float)];
-    fftBufferDict = @{ @"real" : tempReal,
-                       @"imag" : tempImag };
-    
-    do {
-        @autoreleasepool {
-
-            // The device provides single byte values for I and Q. We need two bytes per sample.
-            NSData *resultData = [device readSychronousLength:BLOCKSIZE * 2];
-            if (resultData == nil) {
-                NSApplication *app = [NSApplication sharedApplication];
-                [app stop:self];
-            }
-
-            if (COCOARADIO_DATARECEIVED_ENABLED()) {
-                COCOARADIO_DATARECEIVED((int)[resultData length]);
-            }
-            
-            // Get a reference to the raw bytes from the device
-            const unsigned char *resultSamples = [resultData bytes];
-            if (resultSamples == nil) {
-                NSLog(@"Problem getting samples from device.");
-                resultSamples = [zeros bytes];
-//                continue;
-            }
-            
-            // We need them to be floats (Real [Inphase] and Imaqinary [Quadrature])
-            NSMutableData *realData = [[NSMutableData alloc] initWithLength:sizeof(float) * BLOCKSIZE];
-            NSMutableData *imagData = [[NSMutableData alloc] initWithLength:sizeof(float) * BLOCKSIZE];
-            
-            // All the vDSP routines (from the Accelerate framework)
-            // need the complex data represented in a COMPLEX_SPLIT structure
-            float *realp  = [realData mutableBytes];
-            float *imagp  = [imagData mutableBytes];
-
-//            float average = 0.;
-//            float max = -MAXFLOAT;
-//            float min =  MAXFLOAT;
-            // Convert the samples from bytes to floats between -1 and 1
-            // and split them into seperate I and Q arrays
-            for (int i = 0; i < BLOCKSIZE; i++) {
-                realp[i] = (float)(resultSamples[i*2 + 0] - 127) / 128;
-                imagp[i] = (float)(resultSamples[i*2 + 1] - 127) / 128;
-                
-//                average += realp[i];
-//                average += imagp[i];
-//                max = fmaxf(max, realp[i]);
-//                max = fmaxf(max, imagp[i]);
-//                min = fminf(min, realp[i]);
-//                min = fminf(min, imagp[i]);
-            }
-
-//            NSLog(@"Input average: %f, min: %f, max: %f", average / (BLOCKSIZE * 2.), min, max);
-            
-            NSDictionary *complexRaw = @{ @"real" : realData,
-                                          @"imag" : imagData };
-
-            // Perform the FFT on another thread and broadcast the result
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-            ^{
-                [self fftBlock:complexRaw];
-            });
-            
-            // Perform all the operations on this block
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0),
-            ^{
-                // Demodulate the data
-                NSData *audio = [demodulator demodulateData:complexRaw];
-//                [audioOutput bufferData:audio];
-
-                if (prebuffer > 1) {
-                    prebuffer--;
-                } else {
-                    [audioOutput start];
-                }
-
-                // Notify that the results are available
-                NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-                [center postNotificationName:CocoaSDRAudioDataNotification
-                                      object:audio];
-            });
-        }
-    } while (true);
-}
-
 - (void)processRFBlock:(NSData *)inputData withDuration:(float)duration
 {
     @autoreleasepool {
-        static double averageRate = 0.;
-        
-        // Get the sample rate (make sure it's not zero)
-//        double rate = ([inputData length] / 2) / duration;
-//        if (averageRate == 0.) {
-//            averageRate = rate;
-//        } else {
-//            averageRate = (averageRate * .75) + (rate * .25);
-//            [demodulator setRfCorrectedRate:rate];
-//        }
-        
         if (inputData == nil) {
             return;
         }
@@ -238,34 +61,38 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
             realp[i] = (float)(resultSamples[i*2 + 0] - 127) / 128;
             imagp[i] = (float)(resultSamples[i*2 + 1] - 127) / 128;
         }
-        
-        NSDictionary *complexRaw = @{ @"real" : realData,
-        @"imag" : imagData };
+
+        // Process the samples for visualization with the FFT
+        [fftProcessor addSamplesReal:realData imag:imagData];
         
         // Perform all the operations on this block
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0),
-                       ^{
-                           // Demodulate the data
-                           NSData *audio = [demodulator demodulateData:complexRaw];
-                           [audioOutput bufferData:audio];
-                           audio = nil;
-                           
-                           // Notify that the results are available
-                           //        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-                           //        [center postNotificationName:CocoaSDRAudioDataNotification
-                           //                              object:audio];
-                       });    }
+       ^{
+           NSDictionary *complexRaw = @{ @"real" : realData,
+                                         @"imag" : imagData };
+           
+            // Demodulate the data
+           [demodulatorLock lock];
+           NSData *audio = [demodulator demodulateData:complexRaw];
+           [demodulatorLock unlock];
+
+           [audioOutput bufferData:audio];
+       });
+    }
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     rfSampleRate = SAMPLERATE;
     afSampleRate = 44100;
+
+// Configure the FFT infrastructure for visualizations
+    // It takes a while before the consumers of the FFT data wake up
+    // the ring buffer smooths this and later data flow out.  We'll
+    // use one second's worth of samples as the buffer capacity.
+    fftProcessor = [[CSDRFFT alloc] initWithSize:2048];
     
-//    processQueue = dispatch_queue_create("com.us.alternet.cocoa-radio.processQueue",
-//                                         DISPATCH_QUEUE_SERIAL);
-    
-    // Instanciate an RTL SDR device (choose the first)
+// Instanciate an RTL SDR device (choose the first)
     NSArray *deviceList = [RTLSDRDevice deviceList];
     if ([deviceList count] == 0) {
         // Display an error and close
@@ -305,11 +132,13 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
         return;
     }
 
-    // Set the sample rate and tuning
+// Set the sample rate and tuning
     [device setSampleRate:rfSampleRate];
     
-    // Setup the demodulator (for now, just WBFM)
-    demodulator = [[CSDRDemodFM alloc] init];
+// Setup the demodulator (for now, default to WBFM)
+    demodulatorLock = [[NSLock alloc] init];
+    _demodulationScheme = @"WBFM";
+    demodulator = [[CSDRDemodWBFM alloc] init];
     demodulator.rfSampleRate = rfSampleRate;
     demodulator.afSampleRate = afSampleRate;
     demodulator.ifBandwidth  = 90000;
@@ -317,7 +146,7 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
     demodulator.afBandwidth  = afSampleRate / 2;
     demodulator.afSkirtWidth = 20000;
 
-    // Setup defaults
+// Setup defaults
     [self setLoValue:144.390];
     [self setTuningValue:0.];
     [self setBottomValue:-1.];
@@ -326,8 +155,7 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
     
     [[self waterfallView] setSampleRate:rfSampleRate];
     
-    // Setup the audo output device
-//    NSLog(@"Available audio devices:\n%@", [AudioDevice deviceDict]);
+// Setup the audo output device
     audioOutput = [[CSDRAudioOutput alloc] init];
     float blockRate = SAMPLERATE / BLOCKSIZE;
     audioOutput.blockSize  = afSampleRate / blockRate;
@@ -338,12 +166,12 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
         [app stop:self];
     }
     
-    // Setup the shared context for the spectrum and waterfall views
+// Setup the shared context for the spectrum and waterfall views
     [[self waterfallView] initialize];
     [[self spectrumView] shareContextWithController:[self waterfallView]];
     [[self spectrumView] initialize];
     
-    // Begin asynchronously reading from the device
+// Begin asynchronously reading from the device
     // The following warning can be ignored.  There is a retain cycle
     // but the objects in question live for the duration of the app.
     block = ^(NSData *resultData, float duration) {
@@ -353,73 +181,29 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
     [device readAsynchLength:BLOCKSIZE * 2
                    withBlock:block];
     
+// Setup a timer to set needs redisplay on all views
+    viewTimer = [NSTimer timerWithTimeInterval:(1.0f/60.0f) target:self selector:@selector(animationTimer:) userInfo:nil repeats:YES];
+    [[NSRunLoop currentRunLoop] addTimer:viewTimer forMode:NSDefaultRunLoopMode];
+    [[NSRunLoop currentRunLoop] addTimer:viewTimer forMode:NSEventTrackingRunLoopMode]; // ensure timer fires during resize
     return;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification
 {
-    [outData writeToFile:@"/Users/wdillon/Desktop/out.raw" atomically:YES];
+    return;
 }
-
-/*
-#pragma mark -
-#pragma mark Network delegate routines
-
--(void)NetworkServer:(NetworkServer *)server
-          newSession:(NetworkSession *)session
-{
-    [session setDelegate:self];
-    [sessions addObject:session];
-    NSLog(@"Got client: %@", [session hostname]);
-}
-
-- (void)sessionTerminated:(NetworkSession *)session
-{
-    NSLog(@"Terminated client: %@", [session hostname]);
-    [sessions removeObject:session];
-}
- 
-- (void)broadcastData:(NSData *)data
-{
-    // Get a stable copy of the sessions
-    NSArray *tempSessions;
-    @synchronized(sessions) {
-        tempSessions = [sessions copy];
-    }
-    
-    if (COCOARADIO_SENDDATA_ENABLED()) {
-        COCOARADIO_SENDDATA((int)[data length]);
-    }
-    
-    // Send the data to every session (asynch)
-    for (NetworkSession *session in tempSessions) {
-        [session sendData:data];
-    }
-}
-
-- (void)broadcastDict:(NSDictionary *)dict
-{
-    // Convert the complex split data into interleaved
-    int count = [dict[@"real"] length] / sizeof(float);
-    const float *real = [dict[@"real"] bytes];
-    const float *imag = [dict[@"imag"] bytes];
-    
-    NSMutableData *data = [[NSMutableData alloc] initWithLength:count * sizeof(float) * 2];
-    float *complex = [data mutableBytes];
-    for (int i = 0; i < count; i++) {
-        complex[i * 2 + 0] = real[i];
-        complex[i * 2 + 1] = imag[i];
-    }
-    
-    // Send the data
-    [self broadcastData:data];
-}
-*/
 
 #pragma mark Extra stuff
 - (void)audioAvailable:(NSNotification *)notification
 {
-//    [outData appendData:[notification object]];
+    return;
+}
+
+- (void)animationTimer:(NSTimer *)timer
+{
+    [fftProcessor updateMagnitudeData];
+    [self.waterfallView update];
+    [self.spectrumView  update];
 }
 
 #pragma mark -
@@ -448,6 +232,38 @@ NSString *CocoaSDRAudioDataNotification = @"CocoaSDRAudioDataNotification";
     [demodulator setCenterFreq:newTuningValue * 1000000];
     
     return;
+}
+
+- (CSDRDemod *)demodulator
+{
+    return demodulator;
+}
+
+- (CSDRAudioOutput *)audioOutput
+{
+    return audioOutput;
+}
+
+- (NSString *)demodulationScheme
+{
+    return _demodulationScheme;
+}
+
+- (void)setDemodulationScheme:(NSString *)demodulationScheme
+{
+    _demodulationScheme = demodulationScheme;
+    
+    // Create a new demodulator
+    CSDRDemod *newDemodulator = [CSDRDemod demodulatorWithScheme:demodulationScheme];
+    newDemodulator.rfSampleRate = rfSampleRate;
+    newDemodulator.afSampleRate = afSampleRate;
+    newDemodulator.afBandwidth  = afSampleRate / 2;
+
+    [demodulatorLock lock];
+    demodulator = newDemodulator;
+    [demodulatorLock unlock];
+
+    [audioOutput discontinuity];
 }
 
 @end
