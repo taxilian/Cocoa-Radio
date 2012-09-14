@@ -22,7 +22,5 @@ double subtractTimes( uint64_t endTime, uint64_t startTime );
 NSDictionary *freqXlate(NSDictionary *inputDict, float localOscillator, int sampleRate);
 NSData *quadratureDemod(NSDictionary *inputDict, float gain, float offset);
 NSDictionary *createComplexTone(int samples, float sampleRate, float frequency, float *lastPhase);
-NSDictionary *complexFFTOnDict(NSDictionary *inDict);
-void convertFFTandAverage(NSDictionary *inDict, NSDictionary *fftBufferDict);
 
 #endif
