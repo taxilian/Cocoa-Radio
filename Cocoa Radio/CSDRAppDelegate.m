@@ -201,7 +201,7 @@
 
 - (void)animationTimer:(NSTimer *)timer
 {
-    [fftProcessor updateMagnitudeData];
+//    [fftProcessor updateMagnitudeData];
     [self.waterfallView update];
     [self.spectrumView  update];
 }
@@ -264,6 +264,11 @@
     [demodulatorLock unlock];
 
     [audioOutput discontinuity];
+}
+
+- (NSData *)fftData
+{
+    return [fftProcessor magBuffer];
 }
 
 @end
