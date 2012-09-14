@@ -14,7 +14,7 @@
 
 #include "dspRoutines.h"
 
-//#define ACCELERATE_XLATE
+#define ACCELERATE_XLATE
 #define ACCELERATE_DEMOD
 
 //Raw mach_absolute_times going in, difference in seconds out
