@@ -116,6 +116,7 @@
 		3C85B57D15A649E300803A7B /* NetworkSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NetworkSession.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C9DCD2715EEBE7B0032EDD9 /* CSDRFFT.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRFFT.m; sourceTree = "<group>"; };
 		3CAC559D15D16F7C00FDFF2A /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README; path = ../README; sourceTree = "<group>"; };
+		3CC633881603B0560061DD95 /* CSDRFFT.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRFFT.h; sourceTree = "<group>"; };
 		3CE31D6B15F013DB00F0123B /* CSDRAudioDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRAudioDevice.h; sourceTree = "<group>"; };
 		3CE31D6C15F013DB00F0123B /* CSDRAudioDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRAudioDevice.m; sourceTree = "<group>"; };
 		3CE31DB115F12E3800F0123B /* CSDRRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRRingBuffer.h; sourceTree = "<group>"; };
@@ -148,6 +149,7 @@
 			children = (
 				3C0654921599069F001A9CB7 /* downconvert.m */,
 				3C065494159906CF001A9CB7 /* dspRoutines.h */,
+				3CC633881603B0560061DD95 /* CSDRFFT.h */,
 				3C9DCD2715EEBE7B0032EDD9 /* CSDRFFT.m */,
 				3C4FDB0415ED616300D4B3AD /* CSDRFilter.h */,
 				3C4FDB0515ED616300D4B3AD /* CSDRFilter.m */,
