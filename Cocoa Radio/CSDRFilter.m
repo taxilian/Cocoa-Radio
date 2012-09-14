@@ -126,7 +126,7 @@
     _gain = gain;
     
     // Re-compute the taps
-    NSLog(@"Changed gain to %f", gain);
+//    NSLog(@"Changed gain to %f", gain);
     [self computeTaps];
 }
 
