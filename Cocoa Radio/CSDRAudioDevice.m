@@ -253,7 +253,10 @@ NSMutableArray *devices;
     return _running;
 }
 
-
+- (CSDRRingBuffer *)ringBuffer
+{
+    return ringBuffer;
+}
 
 @end
 
@@ -267,7 +270,7 @@ OSStatus OutputProc(void *inRefCon,
                     AudioBufferList * ioData)
 {
     @autoreleasepool {
-        CSDRAudioDevice *device = (__bridge CSDRAudioDevice *)inRefCon;
+        CSDRAudioOutput *device = (__bridge CSDRAudioOutput *)inRefCon;
         CSDRRingBuffer *ringBuffer = [device ringBuffer];
         
         // During a period of discontinuity, produce silence
@@ -485,11 +488,6 @@ OSStatus OutputProc(void *inRefCon,
 {
     discontinuity = YES;
     [ringBuffer clear];
-}
-
-- (CSDRRingBuffer *)ringBuffer
-{
-    return ringBuffer;
 }
 
 -(void)bufferData:(NSData *)data

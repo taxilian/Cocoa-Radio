@@ -18,15 +18,11 @@
     bool _running;
     bool _prepared;
     
-    bool discontinuity;
-    
     AudioUnit unit;
 
     AudioComponent comp;
     AudioComponentDescription desc;
     AudioComponentInstance auHAL;
-    
-//    size_t bufferSize;
     
     CSDRRingBuffer *ringBuffer;
 
@@ -42,13 +38,6 @@
 - (bool)start;
 - (void)stop;
 
-// This is used to mark a discontinuity, such as frequency change
-// It's purpose is to discard packets in the buffer before the
-// frequency change, then, when the buffer re-fills to 1/2 full,
-// playing will resume.
-- (void)markDiscontinuity;
-- (bool)discontinuity;
-
 @property (readwrite) int sampleRate;
 @property (readwrite) int blockSize;
 @property (readonly) bool running;
@@ -58,7 +47,18 @@
 @end
 
 @interface CSDRAudioOutput : CSDRAudioDevice
+{
+    bool discontinuity;
+}
 
 - (void)bufferData:(NSData *)data;
+
+// This is used to mark a discontinuity, such as frequency change
+// It's purpose is to discard packets in the buffer before the
+// frequency change, then, when the buffer re-fills to 1/2 full,
+// playing will resume.
+- (void)markDiscontinuity;
+- (bool)discontinuity;
+
 
 @end
