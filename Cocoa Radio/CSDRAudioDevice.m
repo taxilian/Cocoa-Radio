@@ -237,12 +237,6 @@ NSMutableArray *devices;
         
         //gains access to the services provided by the component
         AudioComponentInstanceNew(comp, &auHAL);
-        
-        // Subscribe to Audio notifications
-        NSNotificationCenter *center;
-        center = [NSNotificationCenter defaultCenter];
-        [center addObserver:self selector:@selector(audioAvailable:)
-                       name:CocoaSDRAudioDataNotification object:nil];
     }
     
     return self;
