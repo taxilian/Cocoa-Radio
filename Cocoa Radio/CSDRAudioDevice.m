@@ -267,6 +267,13 @@ OSStatus OutputProc(void *inRefCon,
         CSDRAudioOutput *device = (__bridge CSDRAudioOutput *)inRefCon;
         CSDRRingBuffer *ringBuffer = [device ringBuffer];
         
+        // Determine whether this will have a buffer underflow,
+        // if so, trigger a discontinuity.  Perhaps, it'll be less
+        // jarring to have one longer discontinuity than many smaller ones
+        if ([ringBuffer fillLevel] < inNumberFrames) {
+            [device markDiscontinuity];
+        }
+        
         // During a period of discontinuity, produce silence
         if (device.discontinuity) {
             bzero(ioData->mBuffers[0].mData, ioData->mBuffers[0].mDataByteSize);
