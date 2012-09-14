@@ -31,8 +31,6 @@
 
     ShaderProgram *shader;
     
-    NSData *newSlice;
-    
     // This array contains the last spectrum slices
     // The slices are NSData arrays of floats from 0. to 1.
     NSMutableArray *slices;
@@ -47,11 +45,9 @@
 @property (readonly) unsigned int textureID;
 @property (readonly) unsigned int currentLine;
 
+- (void)initialize;
 - (IBAction) sliderUpdate:(id)sender;
 
-- (void)initialize;
-
-- (void)updateData:(id)data;
-- (void)fftNotification:(NSNotificationCenter *)notification;
+- (void)update;
 
 @end

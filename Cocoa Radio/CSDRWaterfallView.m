@@ -60,7 +60,7 @@ rainbow(float pixel[4], float value)
 	pixel[0] = rgb[0];// * CHAR_MAX;
 	pixel[1] = rgb[1];// * CHAR_MAX;
 	pixel[2] = rgb[2];// * CHAR_MAX;
-    pixel[3] = value;//  * CHAR_MAX;
+    pixel[3] = value; //  * CHAR_MAX;
     
 	return;
 }
@@ -69,17 +69,17 @@ rainbow(float pixel[4], float value)
 #pragma mark Init and bookkeeping methods
 + (NSOpenGLPixelFormat *)defaultPixelFormat
 {
-NSOpenGLPixelFormatAttribute attributes [] = {
-    NSOpenGLPFAWindow,
-    NSOpenGLPFADoubleBuffer,
-    NSOpenGLPFAAccumSize, 32,
-    NSOpenGLPFADepthSize, 16,
-    NSOpenGLPFAMultisample,
-    NSOpenGLPFASampleBuffers, (NSOpenGLPixelFormatAttribute)1,
-    NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute)4,
-    (NSOpenGLPixelFormatAttribute)nil };
+    NSOpenGLPixelFormatAttribute attributes [] = {
+        NSOpenGLPFAWindow,
+        NSOpenGLPFADoubleBuffer,
+        NSOpenGLPFAAccumSize, 32,
+        NSOpenGLPFADepthSize, 16,
+        NSOpenGLPFAMultisample,
+        NSOpenGLPFASampleBuffers, (NSOpenGLPixelFormatAttribute)1,
+        NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute)4,
+        (NSOpenGLPixelFormatAttribute)nil };
 
-return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
+    return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
 - (void)awakeFromNib
@@ -94,109 +94,7 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     
     // Create a slices array
     slices = [[NSMutableArray alloc] initWithCapacity:HEIGHT];
-    
-    // Subscribe to FFT notifications
-    NSNotificationCenter *center;
-    center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(fftNotification:)
-                   name:CocoaSDRFFTDataNotification object:nil];
 }
-
-/*
-- (void)initShaders
-{
-    // Read the shader from file
-    NSBundle *bundle = [NSBundle mainBundle];
-    NSURL *shaderURL = [bundle URLForResource:@"waterfallShader"
-                                withExtension:@"ogl"];
-    
-    NSError *nsError = nil;
-    NSString *shaderString = [NSString stringWithContentsOfURL:shaderURL
-                                                      encoding:NSUTF8StringEncoding
-                                                         error:&nsError];
-    
-    if (shaderString == nil) {
-        if (nsError != nil) {
-            NSLog(@"Unable to open shader file: %@", [nsError localizedDescription]);
-        }
-        
-        return;
-    }
-    
-    const GLchar *shaderText = [shaderString cStringUsingEncoding:NSUTF8StringEncoding];
-    
-    // Create ID for shader
-    shader = glCreateShader(GL_FRAGMENT_SHADER);
-    
-    // Define shader text
-    GLint length = (GLint)strlen(shaderText);
-    glShaderSource(shader, 1, &shaderText, &length);
-    
-    // Compile shader
-    glCompileShader(shader);
-    
-    // Associate shader with program
-    program = glCreateProgram();
-    glAttachShader(program, shader);
-    
-    // Link program
-    glLinkProgram(program);
-    
-    // Validate program
-    glValidateProgram(program);
-    
-    // Check the status of the compile/link
-    GLint logLen = 0;
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLen);
-    if(logLen > 0)
-    {
-        // Show any errors as appropriate
-        GLchar *log = malloc(logLen);
-        glGetProgramInfoLog(program, logLen, &logLen, log);
-        fprintf(stderr, "Prog Info Log: %s\n", log);
-        free(log);
-    }
-    
-    glUseProgram(program);
-    // Retrieve all uniform locations that are determined during link phase
-    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniforms);
-    GLint error = glGetError();
-    NSLog(@"Error getting uniform: %d", error);
-
-    numUniforms = [uniforms count];
-    
-    if (uniformIDs == nil) {
-        uniformIDs = malloc(sizeof(GLint) * numUniforms);
-    } else {
-        uniformIDs = realloc(uniformIDs, sizeof(GLint) * numUniforms);
-    }
-    
-    for(int i = 0; i < numUniforms &&
-        i < [uniforms count]; i++)
-    {
-        const GLchar *uniformString = [[uniforms objectAtIndex:i] cStringUsingEncoding:NSUTF8StringEncoding];
-        uniformIDs[i] = glGetUniformLocation(program, uniformString);
-        GLint error = glGetError();
-        NSLog(@"Error getting uniform: %d", error);
-    }
-    
-    // Retrieve all attrib locations that are determined during link phase
-    glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &numAttributes);
-    numAttributes = [attributes count];
-    if (attributeIDs == nil) {
-        attributeIDs = malloc(sizeof(GLint) * numUniforms);
-    } else {
-        attributeIDs = realloc(attributeIDs, sizeof(GLint) * numUniforms);
-    }
-    
-    for(int i = 0; i < numAttributes &&
-        i < [attributes count]; i++)
-    {
-        attributeIDs[i] = glGetAttribLocation(program, [[attributes objectAtIndex:i] cStringUsingEncoding:NSUTF8StringEncoding]);
-    }
-    glUseProgram(0);
-}
-*/
 
 - (void)initGL
 {
@@ -212,13 +110,7 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
         initialized = YES;
     }
 
-    // Create arrays for the uniforms and attribute names
-//    uniforms = @[ @"persistance", @"texture" ];
-//    attributes = nil;
-
-//    [self initShaders];
-
-    // Read the shader from file
+// Read the shader from file
     NSBundle *bundle = [NSBundle mainBundle];
     NSURL *shaderURL = [bundle URLForResource:@"waterfallShader"
                                 withExtension:@"ogl"];
@@ -238,30 +130,30 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     shader = [[ShaderProgram alloc] initWithVertex:nil
                                        andFragment:shaderString];
     
-    // Set black background
+// Set black background
 	glClearColor(0., 0., 0., 1.);
 	
-    // Set viewing mode
+// Set viewing mode
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-1.0, 1., -1.0, 1., -1., 1.);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-    // Set blending characteristics
+// Set blending characteristics
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // Set line width
+// Set line width
 	glLineWidth( 1.5 );
 	
 	glDisable( GL_DEPTH_TEST );
     glEnable( GL_TEXTURE_2D );
 
-    // Get a texture ID
+// Get a texture ID
 	glGenTextures( 1, (GLuint*)&textureID );
     
-    // Set texturing parameters
+// Set texturing parameters
 	glBindTexture(  GL_TEXTURE_2D, textureID );
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
@@ -269,7 +161,6 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST  );
 
     unsigned char *blankImage = malloc(sizeof(float) * 4 * WIDTH * HEIGHT);
-//    bzero(blankImage, sizeof(blankImage));
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
             // Color cube
@@ -293,32 +184,6 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     
 }
 
-- (void)fftNotification:(NSNotification *)notification
-{
-    NSDictionary *fftData = (NSDictionary *)[notification object];
-    const float *realData = (const float *)[fftData[@"real"] bytes];
-    const float *imagData = (const float *)[fftData[@"imag"] bytes];
-
-    NSMutableData *magBuffer = [[NSMutableData alloc] initWithCapacity:WIDTH * sizeof(float)];
-    float *magBytes = [magBuffer mutableBytes];
-    
-    // Compute the magnitude of the data
-    for (int i = 0; i < WIDTH; i++) {
-        magBytes[i] = sqrtf((realData[i] * realData[i]) +
-                            (imagData[i] * imagData[i]));
-        magBytes[i] = log10f(magBytes[i]);
-    }
-    
-    // Update the UI
-    [self updateData:magBuffer];
-}
-
-- (void)updateData:(id)data
-{
-    newSlice = data;
-    [super updateData:self];
-}
-
 - (void)draw
 {
 
@@ -329,7 +194,8 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     }
 
     glBindTexture( GL_TEXTURE_2D, textureID );
-    
+
+    NSData *newSlice = [[self appDelegate] fftData];
     if (newSlice) {
         if (currentLine == HEIGHT) {
             currentLine = 0;
@@ -361,22 +227,12 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
     [shader bind];
 
     // Set the uniforms
-    [shader setIntValue:3
-             forUniform:@"persistance"];
-    [shader setIntValue:currentLine
-             forUniform:@"currentLine"];
-    
-    [shader setIntValue:HEIGHT
-             forUniform:@"height"];
-
-    [shader setFloatValue:[[self appDelegate] bottomValue]
-               forUniform:@"bottomValue"];
-
-    [shader setFloatValue:[[self appDelegate] range]
-               forUniform:@"range"];
-    
-    [shader setIntValue:[[self appDelegate] average]
-             forUniform:@"average"];
+    [shader setIntValue:3                                  forUniform:@"persistance"];
+    [shader setIntValue:currentLine                        forUniform:@"currentLine"];
+    [shader setIntValue:HEIGHT                             forUniform:@"height"];
+    [shader setIntValue:[[self appDelegate] average]       forUniform:@"average"];
+    [shader setFloatValue:[[self appDelegate] bottomValue] forUniform:@"bottomValue"];
+    [shader setFloatValue:[[self appDelegate] range]       forUniform:@"range"];
     
     glBegin( GL_QUADS ); {
 		glColor3f( 0., 1., 0. );
@@ -408,7 +264,11 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 		glVertex2f( [self sliderValue],  1);
 	} glEnd();
     
-//    glFlush();
+}
+
+- (void)update
+{
+    [openGLView setNeedsDisplay:YES];
 }
 
 #pragma mark
@@ -446,9 +306,6 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 
 - (void)mouseDraggedLocation:(NSPoint)location Flags:(NSUInteger)modifierFlags
 {
-
-    
-    
     float width = [openGLView bounds].size.width;
     float normalized = location.x / width;
     [self setSliderValue:(normalized * 2) - 1];
@@ -466,48 +323,3 @@ return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
 @end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

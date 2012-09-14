@@ -71,17 +71,6 @@
     return [openGLView convertPointFromBase:basePoint];
 }
 
-- (void)awakeFromNib
-{
-	[super awakeFromNib];
-    
-    // Subscribe to FFT notifications
-    NSNotificationCenter *center;
-    center = [NSNotificationCenter defaultCenter];
-    [center addObserver:self selector:@selector(fftNotification:)
-                   name:CocoaSDRFFTDataNotification object:nil];
-}
-
 - (void)initGL
 {
     initialized = NO;
@@ -304,6 +293,11 @@
         glColor4f(0., 0., 0., .0625);
     }
 
+    NSData *newData = [[self appDelegate] fftData];
+    if (newData) {
+        fftData = newData;
+    }
+    
     glBegin(GL_QUADS);
     glVertex2d(0., 0.);
     glVertex2d(0., 1.);
@@ -331,28 +325,11 @@
         if (fftData != nil) {
             [self drawDataInRect:borderRect];
         }
-    }
+    }    
 }
 
-- (void)fftNotification:(NSNotification *)notification
+- (void)update
 {
-    NSDictionary *inData = (NSDictionary *)[notification object];
-    const float *realData = (const float *)[inData[@"real"] bytes];
-    const float *imagData = (const float *)[inData[@"imag"] bytes];
-    
-    NSMutableData *magBuffer = [[NSMutableData alloc] initWithCapacity:WIDTH * sizeof(float)];
-    float *magBytes = [magBuffer mutableBytes];
-    
-    // Compute the magnitude of the data
-    for (int i = 0; i < WIDTH; i++) {
-        magBytes[i] = sqrtf((realData[i] * realData[i]) +
-                            (imagData[i] * imagData[i]));
-        magBytes[i] = log10f(magBytes[i]);
-    }
-    
-    // Update the UI
-    fftData = magBuffer;
-    
     [openGLView setNeedsDisplay:YES];
 }
 

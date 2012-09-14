@@ -37,4 +37,6 @@
 
 - (void)initialize;
 
+- (void)update;
+
 @end
