@@ -313,9 +313,11 @@ OSStatus OutputProc(void *inRefCon,
         }
 
         // Copy the left channel to the right one
-        memcpy(ioData->mBuffers[1].mData,
-               ioData->mBuffers[0].mData,
-               ioData->mBuffers[1].mDataByteSize);
+        if (ioData->mNumberBuffers == 2) {
+            memcpy(ioData->mBuffers[1].mData,
+                   ioData->mBuffers[0].mData,
+                   ioData->mBuffers[1].mDataByteSize);
+        }
         
         return noErr;
     }
@@ -398,8 +400,7 @@ OSStatus OutputProc(void *inRefCon,
 //set format to output scope
     AudioUnitSetProperty(auHAL,
                          kAudioUnitProperty_StreamFormat,
-                         kAudioUnitScope_Output,
-                         1,
+                         kAudioUnitScope_Input, 0,
                          &desiredFormat,
                          sizeof(AudioStreamBasicDescription));
 
@@ -410,24 +411,21 @@ OSStatus OutputProc(void *inRefCon,
     Float64 trySampleRate = self.sampleRate;
     err = AudioUnitSetProperty(auHAL,
                                kAudioUnitProperty_SampleRate,
-                               kAudioUnitScope_Global,
-                               0,
+                               kAudioUnitScope_Output, 0,
                                &trySampleRate,
                                sizeof(trySampleRate));
 
     trySampleRate = 0.;
     err = AudioUnitGetProperty(auHAL,
                                kAudioUnitProperty_SampleRate,
-                               kAudioUnitScope_Global,
-                               0,
+                               kAudioUnitScope_Output, 0,
                                &trySampleRate,
                                &size);
     
 //Get the device format back
     AudioUnitGetProperty (auHAL,
                           kAudioUnitProperty_StreamFormat,
-                          kAudioUnitScope_Output,
-                          1,
+                          kAudioUnitScope_Input, 0,
                           &deviceFormat,
                           &size);
     
@@ -466,17 +464,6 @@ OSStatus OutputProc(void *inRefCon,
     _running = YES;
     discontinuity = NO;
 
-// Get the basic description (again!) to see if the sample rate is still wrong (it is)
-//    AudioStreamBasicDescription deviceFormat;
-//    UInt32 size = sizeof(AudioStreamBasicDescription);
-//    AudioUnitGetProperty (auHAL,
-//                          kAudioUnitProperty_StreamFormat,
-//                          kAudioUnitScope_Output,
-//                          1,
-//                          &deviceFormat,
-//                          &size);
-
-    
     return YES;
 }
 
