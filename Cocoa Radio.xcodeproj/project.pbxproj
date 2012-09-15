@@ -19,11 +19,11 @@
 		3C27C5201581763E001FD108 /* OpenGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C27C51F1581763E001FD108 /* OpenGLView.m */; };
 		3C27C52215817A16001FD108 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C27C52115817A16001FD108 /* OpenGL.framework */; };
 		3C2E3DCF1582C4C3003BB124 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */; };
+		3C44EA681604E40B00CF8BFC /* rtl-sdr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C44EA671604E3F100CF8BFC /* rtl-sdr.framework */; };
 		3C48BB4E15C1F17E0047BA39 /* delegateprobes.d in Sources */ = {isa = PBXBuildFile; fileRef = 3C48BB4D15C1F17E0047BA39 /* delegateprobes.d */; };
 		3C4FDB0015ED60B900D4B3AD /* CSDRDemod.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDAFF15ED60B900D4B3AD /* CSDRDemod.m */; };
 		3C4FDB0315ED611A00D4B3AD /* CSDRResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDB0215ED611A00D4B3AD /* CSDRResampler.m */; };
 		3C4FDB0615ED616400D4B3AD /* CSDRFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDB0515ED616300D4B3AD /* CSDRFilter.m */; };
-		3C581AC515B9F61D009503A8 /* rtl-sdr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C581AC415B9F5F2009503A8 /* rtl-sdr.framework */; };
 		3C5C0EE515899F0800A2EB52 /* CSDRSpectrumView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */; };
 		3C75F1D415929F990071DE3F /* spectrumShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1D215929F560071DE3F /* spectrumShader.vert */; };
 		3C75F1DF159393700071DE3F /* ShaderProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C75F1DE159393700071DE3F /* ShaderProgram.m */; };
@@ -43,7 +43,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		3C581AC315B9F5F2009503A8 /* PBXContainerItemProxy */ = {
+		3C44EA661604E3F100CF8BFC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3CFEE8FD15B877220077CF50 /* rtl-sdr.xcodeproj */;
 			proxyType = 2;
@@ -122,7 +122,7 @@
 		3CE31DB115F12E3800F0123B /* CSDRRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRRingBuffer.h; sourceTree = "<group>"; };
 		3CE31DB215F12E3800F0123B /* CSDRRingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRRingBuffer.m; sourceTree = "<group>"; };
 		3CE31DB415F130E500F0123B /* audioprobes.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = audioprobes.d; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
-		3CFEE8FD15B877220077CF50 /* rtl-sdr.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "rtl-sdr.xcodeproj"; path = "../Softshell/rtl-sdr/rtl-sdr.xcodeproj"; sourceTree = "<group>"; };
+		3CFEE8FD15B877220077CF50 /* rtl-sdr.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "rtl-sdr.xcodeproj"; path = "../rtl-sdr/rtl-sdr.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,11 +133,11 @@
 				3C7CAB1A15BDC53600E78D83 /* AudioUnit.framework in Frameworks */,
 				3C7CAB1B15BDC53600E78D83 /* CoreAudioKit.framework in Frameworks */,
 				3C7CAB1715BDC53600E78D83 /* AudioToolbox.framework in Frameworks */,
+				3C44EA681604E40B00CF8BFC /* rtl-sdr.framework in Frameworks */,
 				3C7CAB1615BDC51900E78D83 /* CoreAudio.framework in Frameworks */,
 				3C2E3DCF1582C4C3003BB124 /* Accelerate.framework in Frameworks */,
 				3C27C52215817A16001FD108 /* OpenGL.framework in Frameworks */,
 				3C27C4E915813348001FD108 /* Cocoa.framework in Frameworks */,
-				3C581AC515B9F61D009503A8 /* rtl-sdr.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,10 +262,10 @@
 			name = OpenGL;
 			sourceTree = "<group>";
 		};
-		3C581AC015B9F5F2009503A8 /* Products */ = {
+		3C44EA631604E3F100CF8BFC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3C581AC415B9F5F2009503A8 /* rtl-sdr.framework */,
+				3C44EA671604E3F100CF8BFC /* rtl-sdr.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -336,7 +336,7 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 3C581AC015B9F5F2009503A8 /* Products */;
+					ProductGroup = 3C44EA631604E3F100CF8BFC /* Products */;
 					ProjectRef = 3CFEE8FD15B877220077CF50 /* rtl-sdr.xcodeproj */;
 				},
 			);
@@ -348,11 +348,11 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		3C581AC415B9F5F2009503A8 /* rtl-sdr.framework */ = {
+		3C44EA671604E3F100CF8BFC /* rtl-sdr.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
 			path = "rtl-sdr.framework";
-			remoteRef = 3C581AC315B9F5F2009503A8 /* PBXContainerItemProxy */;
+			remoteRef = 3C44EA661604E3F100CF8BFC /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
