@@ -20,6 +20,7 @@
 		3C27C52215817A16001FD108 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C27C52115817A16001FD108 /* OpenGL.framework */; };
 		3C2E3DCF1582C4C3003BB124 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */; };
 		3C44EA681604E40B00CF8BFC /* rtl-sdr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C44EA671604E3F100CF8BFC /* rtl-sdr.framework */; };
+		3C44EA6A1604E52C00CF8BFC /* rtl-sdr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C44EA671604E3F100CF8BFC /* rtl-sdr.framework */; };
 		3C48BB4E15C1F17E0047BA39 /* delegateprobes.d in Sources */ = {isa = PBXBuildFile; fileRef = 3C48BB4D15C1F17E0047BA39 /* delegateprobes.d */; };
 		3C4FDB0015ED60B900D4B3AD /* CSDRDemod.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDAFF15ED60B900D4B3AD /* CSDRDemod.m */; };
 		3C4FDB0315ED611A00D4B3AD /* CSDRResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDB0215ED611A00D4B3AD /* CSDRResampler.m */; };
@@ -53,6 +54,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		3C44EA691604E52300CF8BFC /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				3C44EA6A1604E52C00CF8BFC /* rtl-sdr.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3C5C0ED615898DD400A2EB52 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -304,6 +315,7 @@
 				3C27C4E115813348001FD108 /* Frameworks */,
 				3C27C4E215813348001FD108 /* Resources */,
 				3C5C0ED615898DD400A2EB52 /* CopyFiles */,
+				3C44EA691604E52300CF8BFC /* CopyFiles */,
 			);
 			buildRules = (
 			);
