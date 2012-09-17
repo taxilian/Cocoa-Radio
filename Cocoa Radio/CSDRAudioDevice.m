@@ -276,8 +276,9 @@ OSStatus OutputProc(void *inRefCon,
         
         // During a period of discontinuity, produce silence
         if (device.discontinuity) {
-            bzero(ioData->mBuffers[0].mData, ioData->mBuffers[0].mDataByteSize);
-            bzero(ioData->mBuffers[1].mData, ioData->mBuffers[1].mDataByteSize);
+            for (int i = 0; i < ioData->mNumberBuffers; i++) {
+                bzero(ioData->mBuffers[i].mData, ioData->mBuffers[i].mDataByteSize);
+            }
             return noErr;
         }
         
@@ -307,8 +308,9 @@ OSStatus OutputProc(void *inRefCon,
         }
 
         if (device.mute) {
-            bzero(ioData->mBuffers[0].mData, ioData->mBuffers[0].mDataByteSize);
-            bzero(ioData->mBuffers[1].mData, ioData->mBuffers[1].mDataByteSize);
+            for (int i = 0; i < ioData->mNumberBuffers; i++) {
+                bzero(ioData->mBuffers[i].mData, ioData->mBuffers[i].mDataByteSize);
+            }
             return noErr;
         }
 
