@@ -8,6 +8,7 @@
 
 #import "CSDRWaterfallView.h"
 #import "OpenGLView.h"
+#import "CSDRAppDelegate.h"
 
 #define WIDTH  2048
 #define HEIGHT 4096

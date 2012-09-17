@@ -8,11 +8,12 @@
 
 #import <Cocoa/Cocoa.h>
 #import "OpenGLController.h"
-#import "CSDRAppDelegate.h"
 #import "ShaderProgram.h"
 
 #define TEXTURE_TYPE GL_TEXTURE_2D
 //#define TEXTURE_TYPE GL_TEXTURE_RECTANGLE_ARB
+
+@class CSDRAppDelegate;
 
 @interface CSDRWaterfallView : OpenGLController
 {
