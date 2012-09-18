@@ -23,8 +23,8 @@
 
 // This block size sets the frequency that the read loop runs
 // sample rate / block size = block rate
-#define SAMPLERATE 2000000
 #define BLOCKSIZE    40960
+#define FFT_SIZE      2048
 
 @implementation CSDRAppDelegate
 
@@ -131,45 +131,51 @@
         [app stop:self];
         return;
     }
-
-// Set the sample rate and tuning
-    [device setSampleRate:rfSampleRate];
     
+    // Set the sample rate and tuning
+    [device setSampleRate:rfSampleRate];
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+{
+//    [self getPreferences];
+    afSampleRate = 48000;
+    rfSampleRate = 2048000;
+
+    [self prepareRadioDevice];
+    
+// Configure the FFT infrastructure for visualizations
+    // It takes a while before the consumers of the FFT data wake up
+    // the ring buffer smooths this and later data flow out.  We'll
+    // use one second's worth of samples as the buffer capacity.
+    fftProcessor = [[CSDRFFT alloc] initWithSize:FFT_SIZE];
+
 // Setup the demodulator (for now, default to WBFM)
     demodulatorLock = [[NSLock alloc] init];
-    _demodulationScheme = @"WBFM";
-    demodulator = [[CSDRDemodWBFM alloc] init];
-    demodulator.rfSampleRate = rfSampleRate;
-    demodulator.afSampleRate = afSampleRate;
-    demodulator.ifBandwidth  = 90000;
-    demodulator.ifSkirtWidth = 20000;
-    demodulator.afBandwidth  = afSampleRate / 2;
-    demodulator.afSkirtWidth = 20000;
+    demodulator = [[CSDRDemodWBFM alloc] initWithRFRate:rfSampleRate
+                                                 AFRate:afSampleRate];
 
-// Setup defaults
+// Apply some additional preferences now that we're ready
     [self setLoValue:144.390];
     [self setTuningValue:0.];
     [self setBottomValue:-1.];
     [self setRange:3.];
     [self setAverage:16];
     
+// Prepare the waterfall and spectrum display classes
     [[self waterfallView] setSampleRate:rfSampleRate];
+    [[self waterfallView] initialize];
+    // Setup the shared context for the spectrum and waterfall views
+    [[self spectrumView] shareContextWithController:[self waterfallView]];
+    [[self spectrumView] initialize];
     
 // Setup the audo output device
-    audioOutput = [[CSDRAudioOutput alloc] init];
-    float blockRate = SAMPLERATE / BLOCKSIZE;
-    audioOutput.blockSize  = afSampleRate / blockRate;
-    audioOutput.sampleRate = afSampleRate;
+    audioOutput = [[CSDRAudioOutput alloc] initWithRate:afSampleRate];
     if (![audioOutput prepare]) {
         NSLog(@"Unable to start the audio device");
         NSApplication *app = [NSApplication sharedApplication];
         [app stop:self];
     }
-    
-// Setup the shared context for the spectrum and waterfall views
-    [[self waterfallView] initialize];
-    [[self spectrumView] shareContextWithController:[self waterfallView]];
-    [[self spectrumView] initialize];
     
 // Begin asynchronously reading from the device
     // The following warning can be ignored.  There is a retain cycle
