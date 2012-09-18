@@ -21,7 +21,17 @@
     float _afSampleRate;
     
     float _rfCorrectedRate;
+    
+    double average;
+    
+    float demodGain;
+ 
+    float rfPower;
+    double powerContext;
+    NSMutableData *radioPower;
 }
+
+- (id)initWithRFRate:(float)rfRate AFRate:(float)afRate;
 
 @property (readwrite) float rfSampleRate;
 @property (readwrite) float afSampleRate;
@@ -41,6 +51,9 @@
 
 @property (readwrite) float afGain;
 @property (readwrite) float rfGain;
+
+@property (readonly)  float rfPower;
+@property (readwrite) float squelch;
 
 - (NSData *)demodulateData:(NSDictionary *)complexInput;
 

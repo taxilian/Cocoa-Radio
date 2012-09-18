@@ -7,14 +7,16 @@
 //
 
 #import "dspRoutines.h"
+#import "dspprobes.h"
 
 @implementation CSDRDemod
 
-- (id)init
+- (id)initWithRFRate:(float)rfRate
+              AFRate:(float)afRate
 {
     self = [super init];
     if (self != nil) {
-
+        
         // Setup the intermediate frequency filter
         IFFilter = [[CSDRlowPassComplex alloc] init];
         [IFFilter setGain:1.];
@@ -25,27 +27,29 @@
         
         // Setup the audio frequency rational resampler
         AFResampler = [[CSDRResampler alloc] init];
-                
+        
         // Set default sample rates (this will set decimation and interpolation)
-        _rfSampleRate = 2048000;
-        _rfCorrectedRate = 2048000;
-        IFFilter.sampleRate = 2048000;
+        _rfSampleRate = rfRate;
+        _rfCorrectedRate = rfRate;
+        IFFilter.sampleRate = rfRate;
         
-        self.afSampleRate = 44100;
-        AFFilter.sampleRate = 44100;
+        self.afSampleRate = afRate;
+        AFFilter.sampleRate = afRate;
         
-        self.ifBandwidth  = 90000;
-        self.ifSkirtWidth = 20000;
-        IFFilter.bandwidth  = 90000;
-        IFFilter.skirtWidth = 20000;
-
-        self.afBandwidth  = 21500;
-        self.afSkirtWidth = 10000;
+        // Assume nyquist for the AFFilter
         AFFilter.bandwidth  = self.afSampleRate / 2.;
         AFFilter.skirtWidth = 10000;
+        
+        self.squelch = 0.;
     }
     
     return self;
+}
+
+// Just do the above initialization with some defaults
+- (id)init
+{
+    return [self initWithRFRate:2048000 AFRate:48000];
 }
 
 - (NSData *)demodulateData:(NSDictionary *)complexInput
@@ -221,13 +225,33 @@ int gcd(int a, int b) {
 #pragma mark -
 @implementation CSDRDemodWBFM
 
-- (id)init
+- (id)initWithRFRate:(float)rfRate
+              AFRate:(float)afRate
 {
-    self = [super init];
-    if (self) {
+    self = [super initWithRFRate:rfRate AFRate:afRate];
+    if (self != nil) {
+        IFFilter.bandwidth  = 90000;
+        IFFilter.skirtWidth = 20000;
+        
+        // Stereo WBFM Radio has a pilot tone at 19KHz.  It's better to
+        // filter this signal out.  Therefore, we'll set the maximum af
+        // frequency to 18 KHz + a 1KHz skirt width.
+        AFFilter.bandwidth  = 18000;
+        AFFilter.skirtWidth =  1000;
+        
+        demodGain = 1.;
+        
+        average = NAN;
+        
+        radioPower = [[NSMutableData alloc] init];
     }
     
     return self;
+}
+
+- (id)init
+{
+    return [self initWithRFRate:2048000 AFRate:48000];
 }
 
 - (NSData *)demodulateData:(NSDictionary *)complexInput
@@ -266,14 +290,23 @@ int gcd(int a, int b) {
     return   50000;
 }
 
+// Stereo WBFM Radio has a pilot tone at 19KHz.  It's better to
+// filter this signal out.  Therefore, we'll set the maximum af
+// frequency to 18 KHz + a 1KHz skirt width.
+- (float)afMaxBandwidth
+{
+    return 18000;
+}
+
 @end
 
 @implementation CSDRDemodNBFM
 
-- (id)init
+- (id)initWithRFRate:(float)rfRate
+              AFRate:(float)afRate
 {
-    self = [super init];
-    if (self) {
+    self = [super initWithRFRate:rfRate AFRate:afRate];
+    if (self != nil) {
         self.ifBandwidth  = 25000;
         self.ifSkirtWidth = 10000;
         
@@ -282,6 +315,11 @@ int gcd(int a, int b) {
     }
     
     return self;
+}
+
+- (id)init
+{
+    return [self initWithRFRate:2048000 AFRate:48000];
 }
 
 - (NSData *)demodulateData:(NSDictionary *)complexInput
