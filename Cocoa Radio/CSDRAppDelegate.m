@@ -237,7 +237,21 @@
 
 - (void)animationTimer:(NSTimer *)timer
 {
-//    [fftProcessor updateMagnitudeData];
+    // Update the power level
+    float rfPower = demodulator.rfPower;
+    if (rfPower > self.powerLevel.maxValue) {
+        self.powerLevel.maxValue = rfPower;
+        self.powerLevel.warningValue = rfPower;
+        self.squelch.maxValue = rfPower;
+    }
+    
+    if (rfPower < self.powerLevel.minValue) {
+        self.powerLevel.minValue = rfPower;
+        self.squelch.minValue = rfPower;
+    }
+    
+    [self.powerLevel setFloatValue:demodulator.rfPower];
+
     [self.waterfallView update];
     [self.spectrumView  update];
 }
