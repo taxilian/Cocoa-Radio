@@ -20,7 +20,8 @@
 		3C27C52215817A16001FD108 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C27C52115817A16001FD108 /* OpenGL.framework */; };
 		3C2E3DCF1582C4C3003BB124 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */; };
 		3C44EA9B16062F3300CF8BFC /* rtl-sdr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C44EA9816062BB700CF8BFC /* rtl-sdr.framework */; };
-		3C48BB4E15C1F17E0047BA39 /* delegateprobes.d in Sources */ = {isa = PBXBuildFile; fileRef = 3C48BB4D15C1F17E0047BA39 /* delegateprobes.d */; };
+		3C48BB4E15C1F17E0047BA39 /* dspprobes.d in Sources */ = {isa = PBXBuildFile; fileRef = 3C48BB4D15C1F17E0047BA39 /* dspprobes.d */; };
+		3C4DE91F1607E9B300DCED2D /* preferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3C4DE91E1607E9B300DCED2D /* preferences.xib */; };
 		3C4FDB0015ED60B900D4B3AD /* CSDRDemod.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDAFF15ED60B900D4B3AD /* CSDRDemod.m */; };
 		3C4FDB0315ED611A00D4B3AD /* CSDRResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDB0215ED611A00D4B3AD /* CSDRResampler.m */; };
 		3C4FDB0615ED616400D4B3AD /* CSDRFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDB0515ED616300D4B3AD /* CSDRFilter.m */; };
@@ -37,6 +38,7 @@
 		3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57D15A649E300803A7B /* NetworkSession.m */; };
 		3C9DCD2815EEBE7B0032EDD9 /* CSDRFFT.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DCD2715EEBE7B0032EDD9 /* CSDRFFT.m */; };
 		3CAC559E15D16F7C00FDFF2A /* README in Resources */ = {isa = PBXBuildFile; fileRef = 3CAC559D15D16F7C00FDFF2A /* README */; };
+		3CBA547C1606D02500CC706C /* rtl-sdr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C44EA9816062BB700CF8BFC /* rtl-sdr.framework */; };
 		3CE31D6D15F013DC00F0123B /* CSDRAudioDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CE31D6C15F013DB00F0123B /* CSDRAudioDevice.m */; };
 		3CE31DB315F12E3800F0123B /* CSDRRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CE31DB215F12E3800F0123B /* CSDRRingBuffer.m */; };
 		3CE31DB515F130E500F0123B /* audioprobes.d in Sources */ = {isa = PBXBuildFile; fileRef = 3CE31DB415F130E500F0123B /* audioprobes.d */; };
@@ -59,6 +61,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				3CBA547C1606D02500CC706C /* rtl-sdr.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,7 +105,8 @@
 		3C27C52115817A16001FD108 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		3C2E3DCE1582C4C3003BB124 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		3C44EA7216058D3700CF8BFC /* rtl-sdr.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "rtl-sdr.xcodeproj"; path = "../Softshell/rtl-sdr/rtl-sdr.xcodeproj"; sourceTree = "<group>"; };
-		3C48BB4D15C1F17E0047BA39 /* delegateprobes.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = delegateprobes.d; sourceTree = "<group>"; };
+		3C48BB4D15C1F17E0047BA39 /* dspprobes.d */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.dtrace; path = dspprobes.d; sourceTree = "<group>"; };
+		3C4DE91E1607E9B300DCED2D /* preferences.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = preferences.xib; sourceTree = "<group>"; };
 		3C4FDAFE15ED60B900D4B3AD /* CSDRDemod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRDemod.h; sourceTree = "<group>"; };
 		3C4FDAFF15ED60B900D4B3AD /* CSDRDemod.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRDemod.m; sourceTree = "<group>"; };
 		3C4FDB0115ED611A00D4B3AD /* CSDRResampler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRResampler.h; sourceTree = "<group>"; };
@@ -223,9 +227,10 @@
 				3C27C50F158153B5001FD108 /* Cocoa Radio.entitlements */,
 				3C27C4FA15813348001FD108 /* CSDRAppDelegate.h */,
 				3C27C4FB15813348001FD108 /* CSDRAppDelegate.m */,
-				3C48BB4D15C1F17E0047BA39 /* delegateprobes.d */,
+				3C48BB4D15C1F17E0047BA39 /* dspprobes.d */,
 				3CAC559D15D16F7C00FDFF2A /* README */,
 				3C27C4FD15813348001FD108 /* MainMenu.xib */,
+				3C4DE91E1607E9B300DCED2D /* preferences.xib */,
 				3C27C4EF15813348001FD108 /* Supporting Files */,
 			);
 			path = "Cocoa Radio";
@@ -376,6 +381,7 @@
 				3C27C4F915813348001FD108 /* Credits.rtf in Resources */,
 				3C27C4FF15813348001FD108 /* MainMenu.xib in Resources */,
 				3CAC559E15D16F7C00FDFF2A /* README in Resources */,
+				3C4DE91F1607E9B300DCED2D /* preferences.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -396,7 +402,7 @@
 				3C0654931599069F001A9CB7 /* downconvert.m in Sources */,
 				3C85B57E15A649E300803A7B /* NetworkServer.m in Sources */,
 				3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */,
-				3C48BB4E15C1F17E0047BA39 /* delegateprobes.d in Sources */,
+				3C48BB4E15C1F17E0047BA39 /* dspprobes.d in Sources */,
 				3C4FDB0015ED60B900D4B3AD /* CSDRDemod.m in Sources */,
 				3C4FDB0315ED611A00D4B3AD /* CSDRResampler.m in Sources */,
 				3C4FDB0615ED616400D4B3AD /* CSDRFilter.m in Sources */,
