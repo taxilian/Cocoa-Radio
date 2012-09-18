@@ -19,7 +19,7 @@
 #import "CSDRFFT.h"
 
 #import "dspRoutines.h"
-#import "delegateprobes.h"
+#import "dspprobes.h"
 
 // This block size sets the frequency that the read loop runs
 // sample rate / block size = block rate
@@ -35,10 +35,6 @@
     @autoreleasepool {
         if (inputData == nil) {
             return;
-        }
-        
-        if (COCOARADIO_DATARECEIVED_ENABLED()) {
-            COCOARADIO_DATARECEIVED((int)[inputData length]);
         }
         
         // Get a reference to the raw bytes from the device
