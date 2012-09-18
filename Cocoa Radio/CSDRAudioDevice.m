@@ -242,6 +242,16 @@ NSMutableArray *devices;
     return self;
 }
 
+- (id)initWithRate:(float)newSampleRate
+{
+    self = [self init];
+    if (self != nil) {
+        self.sampleRate = newSampleRate;
+    }
+    
+    return self;
+}
+
 - (bool)running
 {
     return _running;
@@ -314,11 +324,11 @@ OSStatus OutputProc(void *inRefCon,
             return noErr;
         }
 
-        // Copy the left channel to the right one
-        if (ioData->mNumberBuffers == 2) {
-            memcpy(ioData->mBuffers[1].mData,
+        // Copy the data to other channels
+        for (int i = 1; i < ioData->mNumberBuffers; i++) {
+            memcpy(ioData->mBuffers[i].mData,
                    ioData->mBuffers[0].mData,
-                   ioData->mBuffers[1].mDataByteSize);
+                   ioData->mBuffers[i].mDataByteSize);
         }
         
         return noErr;

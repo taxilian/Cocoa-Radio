@@ -30,6 +30,8 @@
 
 + (NSArray *)deviceDict;
 
+- (id)initWithRate:(float)sampleRate;
+
 - (CSDRRingBuffer *)ringBuffer;
 
 - (bool)prepare;
