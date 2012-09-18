@@ -77,18 +77,52 @@
     }
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+- (void)applyDefaultPreferences
 {
-    rfSampleRate = SAMPLERATE;
-    afSampleRate = 44100;
+    NSString *audioSampleRateKey = @"defaultAudioSampleRate";
+    NSString *audioSampleRate = @"48000";
 
-// Configure the FFT infrastructure for visualizations
-    // It takes a while before the consumers of the FFT data wake up
-    // the ring buffer smooths this and later data flow out.  We'll
-    // use one second's worth of samples as the buffer capacity.
-    fftProcessor = [[CSDRFFT alloc] initWithSize:2048];
+    NSString *radioSampleRateKey = @"defaultRadioSampleRate";
+    NSString *radioSampleRate = @"2048000";
+
+    // Set up the preference.
+    CFPreferencesSetAppValue((__bridge CFStringRef)(audioSampleRateKey),
+                             (__bridge CFPropertyListRef)(audioSampleRate),
+                             kCFPreferencesCurrentApplication);
+
+    CFPreferencesSetAppValue((__bridge CFStringRef)(radioSampleRateKey),
+                             (__bridge CFPropertyListRef)(radioSampleRate),
+                             kCFPreferencesCurrentApplication);
+
+    // Write out the preference data.
+    CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
+}
+
+- (void)getPreferences
+{
+    NSString *audioSampleRateKey = @"defaultAudioSampleRate";
+    CFStringRef audioSampleRate;
     
-// Instanciate an RTL SDR device (choose the first)
+    NSString *radioSampleRateKey = @"defaultRadioSampleRate";
+    CFStringRef radioSampleRate;
+
+    // Read the preferences
+    audioSampleRate = (CFStringRef)CFPreferencesCopyAppValue((__bridge CFStringRef)(audioSampleRateKey),
+                                                             kCFPreferencesCurrentApplication);
+    radioSampleRate = (CFStringRef)CFPreferencesCopyAppValue((__bridge CFStringRef)(radioSampleRateKey),
+                                                             kCFPreferencesCurrentApplication);
+    
+    afSampleRate = [(__bridge NSString *)audioSampleRate floatValue];
+    rfSampleRate = [(__bridge NSString *)radioSampleRate floatValue];
+    
+    // When finished with value, you must release it
+//    CFRelease(audioSampleRate);
+//    CFRelease(radioSampleRate);
+}
+
+- (void)prepareRadioDevice
+{
+    // Instanciate an RTL SDR device (choose the first)
     NSArray *deviceList = [RTLSDRDevice deviceList];
     if ([deviceList count] == 0) {
         // Display an error and close
@@ -206,6 +240,21 @@
 //    [fftProcessor updateMagnitudeData];
     [self.waterfallView update];
     [self.spectrumView  update];
+}
+
+- (IBAction)showProperties:(id)sender
+{
+    NSBundle *mainBundle = [NSBundle mainBundle];
+
+    NSDictionary *options = nil;
+//    NSArray *objects = [mainBundle loadNibNamed:@"preferences"
+//                                          owner:self
+//                                        options:options];
+}
+
+- (IBAction)squelchChanged:(NSSlider *)sender;
+{
+    self.demodulator.squelch = [sender floatValue];
 }
 
 #pragma mark -
