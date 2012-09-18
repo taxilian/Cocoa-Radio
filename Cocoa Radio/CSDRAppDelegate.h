@@ -40,6 +40,12 @@
     NSTimer *viewTimer;
 }
 
+- (IBAction)showProperties:(id)sender;
+- (IBAction)squelchChanged:(NSSlider *)sender;
+
+@property (readwrite) IBOutlet NSLevelIndicator *powerLevel;
+@property (readwrite) IBOutlet NSSlider *squelch;
+
 @property (readwrite) IBOutlet NSWindow *window;
 @property (readwrite) IBOutlet NSTextField *tuningField;
 @property (readwrite) IBOutlet NSTextField *loField;
@@ -58,7 +64,6 @@
 
 @property (readwrite) float tuningValue;
 @property (readwrite) float loValue;
-
 
 @property (readonly)  NSData *fftData;
 
