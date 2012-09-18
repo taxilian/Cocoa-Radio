@@ -1437,7 +1437,7 @@
 								<string key="NSContents"/>
 								<string key="NSCellIdentifier">_NS:9</string>
 								<reference key="NSControlView" ref="513010423"/>
-								<double key="NSMaxValue">5</double>
+								<double key="NSMaxValue">15</double>
 								<double key="NSMinValue">0.0</double>
 								<double key="NSValue">1</double>
 								<double key="NSAltIncValue">0.0</double>
