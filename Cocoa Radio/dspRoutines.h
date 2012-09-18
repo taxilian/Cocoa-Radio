@@ -23,4 +23,10 @@ NSDictionary *freqXlate(NSDictionary *inputDict, float localOscillator, int samp
 NSData *quadratureDemod(NSDictionary *inputDict, float gain, float offset);
 NSDictionary *createComplexTone(int samples, float sampleRate, float frequency, float *lastPhase);
 
+// Bootstrap the process by setting average = NAN
+void removeDC(NSMutableData *data, double *average, double alpha);
+
+// Calculate power level from the given signal (log 10)
+void getPower(NSDictionary *input, NSMutableData *output, double *context, double alpha);
+
 #endif

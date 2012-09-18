@@ -310,3 +310,51 @@ quadratureDemod(NSDictionary *inputDict, float gain, float offset)
     // Return the results
     return resultData;
 }
+
+void removeDC(NSMutableData *data, double *average, double alpha)
+{
+    int length = [data length] / sizeof(float);
+    float *realSamples = [data mutableBytes];
+
+    // Bootstrap DC offset correction
+    if (isnan(*average)) {
+        *average = realSamples[0];
+    }
+    
+    // Do the filter
+    for (int i = 0; i < length; i++) {
+        *average = (*average * (1. - alpha)) + (realSamples[i] * alpha);
+        realSamples[i] = realSamples[i] - *average;
+    }
+}
+
+void getPower(NSDictionary *input, NSMutableData *output, double *context, double alpha)
+{
+    NSData *realData = input[@"real"];
+    NSData *imagData = input[@"imag"];
+    
+    int length = [realData length] / sizeof(float);
+    const float *realSamples = [realData bytes];
+    const float *imagSamples = [imagData bytes];
+    
+    float *outSamples = [output mutableBytes];
+    
+    // Compute the power average
+    for (int i = 0; i < length; i++) {
+        // Magnitude using sum of squares
+        double magnitude = (realSamples[i] * realSamples[i]) +
+                           (imagSamples[i] * imagSamples[i]);
+        
+        // This sqrt may not be necessary if it comes up as a
+        // significant part of the processing time
+//        magnitude = sqrt(magnitude);
+        
+        // Cheezy single-pole IIR low-pass filter
+        *context = (*context * (1. - alpha)) + (magnitude * alpha);
+
+        // Save the envelope of this to the output array
+        outSamples[i] = log10(*context) * 10;
+//        outSamples[i] = *context;
+    }
+}
+
