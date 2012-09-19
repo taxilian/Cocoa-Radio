@@ -68,11 +68,12 @@
                                          @"imag" : imagData };
            
             // Demodulate the data
-           [demodulatorLock lock];
-           NSData *audio = [demodulator demodulateData:complexRaw];
-           [demodulatorLock unlock];
-
-           [audioOutput bufferData:audio];
+           if ([demodulatorLock tryLock]) {
+               NSData *audio = [demodulator demodulateData:complexRaw];
+               [demodulatorLock unlock];
+               [audioOutput bufferData:audio];
+           }
+           
        });
     }
 }
