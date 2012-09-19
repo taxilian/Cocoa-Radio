@@ -332,6 +332,7 @@ void getPower(NSDictionary *input, NSMutableData *output, double *context, doubl
     const float *imagSamples = [imagData bytes];
     
     float *outSamples = [output mutableBytes];
+    float tempSamples[length];
     
     // Compute the power average
     for (int i = 0; i < length; i++) {
@@ -347,8 +348,16 @@ void getPower(NSDictionary *input, NSMutableData *output, double *context, doubl
         *context = (*context * (1. - alpha)) + (magnitude * alpha);
 
         // Save the envelope of this to the output array
+        // As strange as it seems, computing the log is an expensive
+        // operation!?
+#ifndef ACCELERATE_DEMOD
         outSamples[i] = log10(*context) * 10;
-//        outSamples[i] = *context;
+#endif
     }
+
+#ifdef ACCELERATE_DEMOD
+    float zeroRef = 0.;
+    vDSP_vdbcon(tempSamples, 1, &zeroRef, outSamples, 1, length, 0);
+#endif
 }
 
