@@ -121,23 +121,24 @@ freqXlate(NSDictionary *inputDict, float localOscillator, int sampleRate)
     
 #ifdef ACCELERATE_XLATE
     // Create the phase and coeff. arrays
-    float phase[count];
+    float *phase = malloc(count * sizeof(float));
     for (int i = 0; i < count; i++) {
         phase[i] = (delta_phase * (float)i) + lastPhase;
         phase[i] = fmod(phase[i], 1.) * 2.;
     }
     
     // Vectorized cosine and sines
-    float real[count];
-    float imag[count];
     DSPSplitComplex coeff;
-    coeff.realp = real;
-    coeff.imagp = imag;
+    coeff.realp = malloc(count * sizeof(float));
+    coeff.imagp = malloc(count * sizeof(float));
     vvsinpif(coeff.realp, phase, &count);
     vvcospif(coeff.imagp, phase, &count);
+    free(phase);
     
     // Vectorized complex multiplication
     vDSP_zvmul(&input, 1, &coeff, 1, &result, 1, count, 1);
+    free(coeff.realp);
+    free(coeff.imagp);
     
 #else
     const float *inputReal = [inputDict[@"real"] bytes];
@@ -177,13 +178,6 @@ freqXlate(NSDictionary *inputDict, float localOscillator, int sampleRate)
     
     counter += 1;
     runningAverage += deltaTime;
-    
-    if (counter == 1000) {
-//        NSLog(@"Average runtime: %f", runningAverage / 1000);
-        
-        counter = 0;
-        runningAverage = 0.;
-    }
     
     lastPhase = fmod(count * delta_phase + lastPhase, 1.);
 
