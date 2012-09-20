@@ -9,7 +9,7 @@
 #import "CSDRFFT.h"
 #import "CSDRRingBuffer.h"
 
-#import "delegateprobes.h"
+#import "dspprobes.h"
 
 #import <Accelerate/Accelerate.h>
 #import <vecLib/vForce.h>
