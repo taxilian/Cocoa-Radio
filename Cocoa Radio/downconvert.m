@@ -124,15 +124,17 @@ freqXlate(NSDictionary *inputDict, float localOscillator, int sampleRate)
     float *phase = malloc(count * sizeof(float));
     for (int i = 0; i < count; i++) {
         phase[i] = (delta_phase * (float)i) + lastPhase;
-        phase[i] = fmod(phase[i], 1.) * 2.;
+        phase[i] = fmod(phase[i], 1.) * 2. * M_PI;
     }
     
     // Vectorized cosine and sines
     DSPSplitComplex coeff;
     coeff.realp = malloc(count * sizeof(float));
     coeff.imagp = malloc(count * sizeof(float));
-    vvsinpif(coeff.realp, phase, &count);
-    vvcospif(coeff.imagp, phase, &count);
+    vvsinf(coeff.realp, phase, &count);
+    vvcosf(coeff.imagp, phase, &count);
+//    vvsinpif(coeff.realp, phase, &count);
+//    vvcospif(coeff.imagp, phase, &count);
     free(phase);
     
     // Vectorized complex multiplication
