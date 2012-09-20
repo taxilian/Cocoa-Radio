@@ -61,19 +61,16 @@
         // Process the samples for visualization with the FFT
         [fftProcessor addSamplesReal:realData imag:imagData];
         
-        // Perform all the operations on this block
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0),
-       ^{
-           NSDictionary *complexRaw = @{ @"real" : realData,
+        // Perform all the demodulation on the demodulation queue
+        // this is basically like a dedicated thread for demod.
+        dispatch_async(demodQueue,
+        ^{
+            NSDictionary *complexRaw = @{ @"real" : realData,
                                          @"imag" : imagData };
            
             // Demodulate the data
-           if ([demodulatorLock tryLock]) {
-               NSData *audio = [demodulator demodulateData:complexRaw];
-               [demodulatorLock unlock];
-               [audioOutput bufferData:audio];
-           }
-           
+            NSData *audio = [demodulator demodulateData:complexRaw];
+            [audioOutput bufferData:audio];
        });
     }
 }
@@ -182,7 +179,7 @@
     fftProcessor = [[CSDRFFT alloc] initWithSize:FFT_SIZE];
 
 // Setup the demodulator (for now, default to WBFM)
-    demodulatorLock = [[NSLock alloc] init];
+    demodQueue  = dispatch_queue_create("com.us.alternet.cocoaradio.demod", DISPATCH_QUEUE_SERIAL);
     demodulator = [[CSDRDemodWBFM alloc] initWithRFRate:rfSampleRate
                                                  AFRate:afSampleRate];
 
@@ -325,9 +322,10 @@
     newDemodulator.afSampleRate = afSampleRate;
     newDemodulator.afBandwidth  = afSampleRate / 2;
 
-    [demodulatorLock lock];
-    demodulator = newDemodulator;
-    [demodulatorLock unlock];
+    // Change the demodulator "atomically"
+    dispatch_sync(demodQueue, ^{
+        demodulator = newDemodulator;
+    });
 
     [audioOutput discontinuity];
 }

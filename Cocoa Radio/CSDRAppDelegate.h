@@ -33,7 +33,7 @@
     CSDRAudioOutput *audioOutput;
     CSDRDemod *demodulator;
     NSString *_demodulationScheme;
-    NSLock *demodulatorLock;
+    dispatch_queue_t demodQueue;
     
     // View helpers
     CSDRFFT *fftProcessor;
