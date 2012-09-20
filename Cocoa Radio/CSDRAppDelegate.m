@@ -65,12 +65,16 @@
         // this is basically like a dedicated thread for demod.
         dispatch_async(demodQueue,
         ^{
-            NSDictionary *complexRaw = @{ @"real" : realData,
-                                         @"imag" : imagData };
-           
-            // Demodulate the data
-            NSData *audio = [demodulator demodulateData:complexRaw];
-            [audioOutput bufferData:audio];
+            // This must be in a autorelease pool, otherwise the
+            // allocations will pool up.
+            @autoreleasepool {
+                NSDictionary *complexRaw = @{ @"real" : realData,
+                @"imag" : imagData };
+                
+                // Demodulate the data
+                NSData *audio = [demodulator demodulateData:complexRaw];
+                [audioOutput bufferData:audio];
+            }
        });
     }
 }
