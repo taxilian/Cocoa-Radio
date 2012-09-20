@@ -352,13 +352,15 @@ void getPower(NSDictionary *input, NSMutableData *output, double *context, doubl
         // Save the envelope of this to the output array
         // As strange as it seems, computing the log is an expensive
         // operation!?
-#ifndef ACCELERATE_DEMOD
+#ifdef ACCELERATE_DEMOD
+        tempSamples[i] = *context;
+#else
         outSamples[i] = log10(*context) * 10;
 #endif
     }
 
 #ifdef ACCELERATE_DEMOD
-    float zeroRef = 0.;
+    float zeroRef = 1.;
     vDSP_vdbcon(tempSamples, 1, &zeroRef, outSamples, 1, length, 0);
 #endif
 }
