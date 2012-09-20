@@ -318,6 +318,7 @@ void removeDC(NSMutableData *data, double *average, double alpha)
     }
     
     // Do the filter
+//TODO:  I should be able to use accelerate framework to speed this up
     for (int i = 0; i < length; i++) {
         *average = (*average * (1. - alpha)) + (realSamples[i] * alpha);
         realSamples[i] = realSamples[i] - *average;
@@ -339,6 +340,7 @@ void getPower(NSDictionary *input, NSMutableData *output, double *context, doubl
     // Compute the power average
     for (int i = 0; i < length; i++) {
         // Magnitude using sum of squares
+//TODO:  I should be able to use accelerate framework to speed this up
         double magnitude = (realSamples[i] * realSamples[i]) +
                            (imagSamples[i] * imagSamples[i]);
         
@@ -347,6 +349,7 @@ void getPower(NSDictionary *input, NSMutableData *output, double *context, doubl
 //        magnitude = sqrt(magnitude);
         
         // Cheezy single-pole IIR low-pass filter
+//TODO:  I should be able to use accelerate framework to speed this up
         *context = (*context * (1. - alpha)) + (magnitude * alpha);
 
         // Save the envelope of this to the output array
