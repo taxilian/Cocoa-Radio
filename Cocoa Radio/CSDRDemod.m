@@ -279,8 +279,9 @@ int gcd(int a, int b) {
     getPower(filtered, radioPower, &powerContext, .0001);
     
     // Quadrature demodulation
+    float dGain = demodGain + (self.rfSampleRate / (2 * M_PI * IFFilter.bandwidth));
     NSMutableData *demodulated;
-    demodulated = (NSMutableData *)quadratureDemod(filtered, demodGain, 0.);
+    demodulated = (NSMutableData *)quadratureDemod(filtered, dGain, 0.);
 
     // Remove any residual DC in the signal
     removeDC(demodulated, &average, .0001);
