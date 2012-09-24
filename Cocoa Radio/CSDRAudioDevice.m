@@ -486,22 +486,25 @@ OSStatus OutputProc(void *inRefCon,
 
 - (void)markDiscontinuity
 {
+    NSLog(@"Marking audio discontinuity.");
     discontinuity = YES;
     [ringBuffer clear];
 }
 
 -(void)bufferData:(NSData *)data
 {
+    int length = [data length] / sizeof(float);
+    
     [ringBuffer storeData:data];
 
     // If it's not started yet, wait until the ringbuffer is half
     // full, then start it.
     if (!self.running) {
-        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] / 2)) {
+        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] - length)) {
             [self start];
         }
     } else if (discontinuity) {
-        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] / 2)) {
+        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] - length)) {
             discontinuity = false;
         }
     }
