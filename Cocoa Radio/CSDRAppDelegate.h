@@ -43,6 +43,14 @@
 - (IBAction)showProperties:(id)sender;
 - (IBAction)squelchChanged:(NSSlider *)sender;
 
+@property (readwrite) IBOutlet NSSlider *ifBandwidthSlider;
+@property (readwrite) IBOutlet NSSlider *afBandwidthSlider;
+@property (readwrite) IBOutlet NSTextField *ifBandwidthField;
+@property (readwrite) IBOutlet NSTextField *afBandwidthField;
+- (IBAction)changeIFbandwidth:(NSSlider *)sender;
+- (IBAction)changeAFbandwidth:(NSSlider *)sender;
+
+@property (readwrite) IBOutlet NSLevelIndicator *bufferLevel;
 @property (readwrite) IBOutlet NSLevelIndicator *powerLevel;
 @property (readwrite) IBOutlet NSSlider *squelch;
 
