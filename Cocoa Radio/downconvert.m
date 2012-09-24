@@ -16,6 +16,7 @@
 
 #define ACCELERATE_XLATE
 #define ACCELERATE_DEMOD
+//#define ACCELERATE_POWER
 
 //Raw mach_absolute_times going in, difference in seconds out
 double subtractTimes( uint64_t endTime, uint64_t startTime )
@@ -227,10 +228,37 @@ quadratureDemod(NSDictionary *inputDict, float gain, float offset)
     
     // Quadrature demodulation works by (complex) multiplying
     // the complex conjugate of the previous sample with the current
+
+// First, normalize the input vectors to be on the unit circle
+    // Compute the magnitude of the vectors
+//    float *scalars = malloc(count * sizeof(float));
+//    float *mags    = malloc(count * sizeof(float));
     
-    // Do do this, we'll copy the input in a temporary array,
-    // shifted to the right one element.
-    // Then, we'll put the "lastsample" into the head
+    // Fill the scalars with zeros for the origin (0,0)
+//    vDSP_vclr(scalars, 1, count);
+    
+    // Calculate the vector distance from the origin (pythagoras)
+//    vDSP_vpythg(input.realp, 1, scalars, 1,
+//                input.imagp, 1, scalars, 1,
+//                mags, 1, count);
+    
+    // Multiply the input by the inverse of the distance
+    // Set the scalar array to 1 for computing the inverse
+//    float value = 1.;
+//    vDSP_vfill(&value, scalars, 1, count);
+    
+    // Divide one by the distance to find the scaling value
+    // Can we use an input array as the output???
+//    vDSP_vdiv(scalars, 1, mags, 1, mags, 1, count);
+    
+    // Scale the input by the calculated scaling value
+//    vDSP_vmul(mags, 1, input.realp, 1, input.realp, 1, count);
+//    vDSP_vmul(mags, 1, input.imagp, 1, input.realp, 1, count);
+    
+
+// Next, we'll copy the normalized input into another array, shifted
+    // to the right one element.  Then, we'll put the "lastsample"
+    // into the head element.
     DSPSplitComplex temp;
     temp.realp = malloc([realIn length]);
     temp.imagp = malloc([imagIn length]);
@@ -256,6 +284,15 @@ quadratureDemod(NSDictionary *inputDict, float gain, float offset)
     for (int i = 0; i < count; i++) {
         float conjReal;
         float conjImag;
+        
+        // Normallize the current element.  This should also
+        // normallize the conjugate because it'll already by
+        // normallized.
+        float length = sqrtf((input.realp[i] * input.realp[i]) +
+                             (input.imagp[i] * input.imagp[i]));
+        float scalar = 1. / length;
+        input.realp[i] = input.realp[i] * scalar;
+        input.imagp[i] = input.imagp[i] * scalar;
         
         if (i == 0) {
             conjReal = lastReal;
@@ -325,7 +362,8 @@ void removeDC(NSMutableData *data, double *average, double alpha)
     }
 }
 
-void getPower(NSDictionary *input, NSMutableData *output, double *context, double alpha)
+// requires a 4-element float context array
+void getPower(NSDictionary *input, NSMutableData *output, float context[4], double alpha)
 {
     NSData *realData = input[@"real"];
     NSData *imagData = input[@"imag"];
@@ -333,38 +371,72 @@ void getPower(NSDictionary *input, NSMutableData *output, double *context, doubl
     int length = [realData length] / sizeof(float);
     const float *realSamples = [realData bytes];
     const float *imagSamples = [imagData bytes];
+
+    COMPLEX_SPLIT complexInput;
+    complexInput.realp = (float *)realSamples;
+    complexInput.imagp = (float *)imagSamples;
     
     float *outSamples = [output mutableBytes];
     float tempSamples[length];
+
+#ifdef ACCELERATE_POWER
+    float *tempInput  = malloc((length + 2) * sizeof(float));
+    float *tempOutput = malloc((length + 2) * sizeof(float));
     
-    // Compute the power average
-    for (int i = 0; i < length; i++) {
-        // Magnitude using sum of squares
-//TODO:  I should be able to use accelerate framework to speed this up
-        double magnitude = (realSamples[i] * realSamples[i]) +
-                           (imagSamples[i] * imagSamples[i]);
-        
-        // This sqrt may not be necessary if it comes up as a
-        // significant part of the processing time
-//        magnitude = sqrt(magnitude);
-        
-        // Cheezy single-pole IIR low-pass filter
-//TODO:  I should be able to use accelerate framework to speed this up
-        *context = (*context * (1. - alpha)) + (magnitude * alpha);
-
-        // Save the envelope of this to the output array
-        // As strange as it seems, computing the log is an expensive
-        // operation!?
-#ifdef ACCELERATE_DEMOD
-        tempSamples[i] = *context;
-#else
-        outSamples[i] = log10(*context) * 10;
-#endif
-    }
-
-#ifdef ACCELERATE_DEMOD
+    // Calcluate the magnitudes from the input array (starting at index 2)
+    vDSP_zvmags(&complexInput, 1, &tempInput[2], 1, length);
+    // Copy the context into the first two spots
+    memcpy(tempInput, context, 2 * sizeof(float));
+    // Copy the context into the start of the output
+    memcpy(tempOutput, &context[2], 2 * sizeof(float));
+    
+    // Setup the IIR as a 2 pole, 2 zero differential equation
+    float coeff[5] = {1. - alpha, 0., 0., -1 * alpha, 0.};
+    vDSP_deq22(tempInput, 1, coeff, tempOutput, 1, length);
+    
+    // Copy the context info out
+    memcpy(context, &tempInput[length], 2 * sizeof(float));
+    memcpy(&context[2], &tempOutput[length], 2 * sizeof(float));
+    
+    // Calculate the dbs of the resuling value
     float zeroRef = 1.;
     vDSP_vdbcon(tempSamples, 1, &zeroRef, outSamples, 1, length, 0);
+    
+    // Copy the results into the output array
+    memcpy(tempOutput, tempOutput, length * sizeof(float));
+    free(tempInput);
+    free(tempOutput);
+
+#else
+    float *tempInput  = malloc(length * sizeof(float));
+    float *tempOutput = malloc(length * sizeof(float));
+
+    // Calcluate the magnitudes from the input array (starting at index 2)
+    vDSP_zvmags(&complexInput, 1, tempInput, 1, length);
+    
+    // Pre-multiply the magnitudes by alpha using accelerate
+    float falpha = alpha;
+    vDSP_vsmul(tempInput, 1, &falpha, tempInput, 1, length);
+    
+    // Compute the power average
+    float average = context[0];
+    for (int i = 0; i < length; i++) {
+        // Magnitude using sum of squares
+        float magnitude = tempInput[i];
+        
+        // Cheezy single-pole IIR low-pass filter
+        average = (average * (1. - alpha)) + magnitude;
+        tempOutput[i] = average;
+    }
+    
+    // compute the log-10 db
+    float zeroRef = 1.;
+    vDSP_vdbcon(tempOutput, 1, &zeroRef, outSamples, 1, length, 0);
+
+    // Book keeping
+    context[0] = average;
+    free(tempInput);
+    free(tempOutput);
 #endif
 }
 
