@@ -184,8 +184,26 @@
 
 // Setup the demodulator (for now, default to WBFM)
     demodQueue  = dispatch_queue_create("com.us.alternet.cocoaradio.demod", DISPATCH_QUEUE_SERIAL);
-    demodulator = [[CSDRDemodWBFM alloc] initWithRFRate:rfSampleRate
-                                                 AFRate:afSampleRate];
+//    [self.demodulatorSelector setStringValue:@"WBFM"];
+//    [self setDemodulationScheme:@"WBFM"];
+
+    // Create a new demodulator
+    CSDRDemod *newDemodulator = [CSDRDemod demodulatorWithScheme:@"WBFM"];
+    newDemodulator.rfSampleRate = rfSampleRate;
+    newDemodulator.afSampleRate = afSampleRate;
+    demodulator = newDemodulator;
+    
+    // Setup the endpoints on the slider
+    self.ifBandwidthSlider.maxValue = newDemodulator.ifMaxBandwidth;
+    self.ifBandwidthSlider.minValue = newDemodulator.ifMinBandwidth;
+    self.afBandwidthSlider.maxValue = newDemodulator.afMaxBandwidth;
+    self.afBandwidthSlider.minValue = newDemodulator.afMinBandwidth;
+    
+    // Setup the defaults on the slider
+    self.ifBandwidthSlider.floatValue = newDemodulator.ifBandwidth;
+    self.afBandwidthSlider.floatValue = newDemodulator.afBandwidth;
+    [self changeIFbandwidth:self.ifBandwidthSlider];
+    [self changeAFbandwidth:self.afBandwidthSlider];
 
 // Apply some additional preferences now that we're ready
     [self setLoValue:144.390];
@@ -208,6 +226,9 @@
         NSApplication *app = [NSApplication sharedApplication];
         [app stop:self];
     }
+    
+    // Set the buffer level maximum value
+    [self.bufferLevel setMaxValue:audioOutput.ringBuffer.capacity];
     
 // Begin asynchronously reading from the device
     // The following warning can be ignored.  There is a retain cycle
@@ -239,6 +260,8 @@
 
 - (void)animationTimer:(NSTimer *)timer
 {
+    static float bufferAverage = 0;
+    
     // Update the power level
     float rfPower = demodulator.rfPower;
     if (rfPower > self.powerLevel.maxValue) {
@@ -254,6 +277,11 @@
     
     [self.powerLevel setFloatValue:demodulator.rfPower];
 
+    // Update the buffer level
+    float buffLevel = audioOutput.ringBuffer.fillLevel;
+    bufferAverage = (bufferAverage * .9) + (buffLevel * .1);
+    self.bufferLevel.floatValue = bufferAverage;
+    
     [self.waterfallView update];
     [self.spectrumView  update];
 }
@@ -293,12 +321,31 @@
     [audioOutput markDiscontinuity];
 }
 
-// Tuning value provided in KHz
+// Tuning value provided in MHz
 - (void)setTuningValue:(float)newTuningValue
 {
+    // Tuning value expected is Hz.
     [demodulator setCenterFreq:newTuningValue * 1000000];
     
     return;
+}
+
+- (IBAction)changeIFbandwidth:(NSSlider *)sender
+{
+    float value = sender.floatValue;
+    demodulator.ifBandwidth = value;
+
+    NSString *bwString = [NSString stringWithFormat:@"%1.1f", value / 1000];
+    [self.ifBandwidthField setStringValue:bwString];
+}
+
+- (IBAction)changeAFbandwidth:(NSSlider *)sender
+{
+    float value = sender.floatValue;
+    demodulator.afBandwidth = value;
+
+    NSString *bwString = [NSString stringWithFormat:@"%1.1f", value / 1000];
+    [self.afBandwidthField setStringValue:bwString];
 }
 
 - (CSDRDemod *)demodulator
@@ -318,14 +365,29 @@
 
 - (void)setDemodulationScheme:(NSString *)demodulationScheme
 {
+    NSLog(@"Change scheme attempted.");
+    return;
     _demodulationScheme = demodulationScheme;
+    
+    return;
     
     // Create a new demodulator
     CSDRDemod *newDemodulator = [CSDRDemod demodulatorWithScheme:demodulationScheme];
     newDemodulator.rfSampleRate = rfSampleRate;
     newDemodulator.afSampleRate = afSampleRate;
-    newDemodulator.afBandwidth  = afSampleRate / 2;
 
+    // Setup the endpoints on the slider
+    self.ifBandwidthSlider.maxValue = newDemodulator.ifMaxBandwidth;
+    self.ifBandwidthSlider.minValue = newDemodulator.ifMinBandwidth;
+    self.afBandwidthSlider.maxValue = newDemodulator.afMaxBandwidth;
+    self.afBandwidthSlider.minValue = newDemodulator.afMinBandwidth;
+    
+    // Setup the defaults on the slider
+    self.ifBandwidthSlider.floatValue = newDemodulator.ifBandwidth;
+    self.afBandwidthSlider.floatValue = newDemodulator.afBandwidth;
+    [self changeIFbandwidth:self.ifBandwidthSlider];
+    [self changeAFbandwidth:self.afBandwidthSlider];
+    
     // Change the demodulator "atomically"
     dispatch_sync(demodQueue, ^{
         demodulator = newDemodulator;
