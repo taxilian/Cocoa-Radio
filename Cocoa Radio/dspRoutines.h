@@ -27,6 +27,6 @@ NSDictionary *createComplexTone(int samples, float sampleRate, float frequency, 
 void removeDC(NSMutableData *data, double *average, double alpha);
 
 // Calculate power level from the given signal (log 10)
-void getPower(NSDictionary *input, NSMutableData *output, double *context, double alpha);
+void getPower(NSDictionary *input, NSMutableData *output, float context[4], double alpha);
 
 #endif
