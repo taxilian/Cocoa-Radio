@@ -237,12 +237,13 @@ int gcd(int a, int b) {
     if (self != nil) {
         IFFilter.bandwidth  = 90000;
         IFFilter.skirtWidth = 20000;
+        IFFilter.gain = 5.;
         
         // Stereo WBFM Radio has a pilot tone at 19KHz.  It's better to
         // filter this signal out.  Therefore, we'll set the maximum af
         // frequency to 18 KHz + a 1KHz skirt width.
         AFFilter.bandwidth  = 18000;
-        AFFilter.skirtWidth =  1000;
+        AFFilter.skirtWidth = 10000;
         
         demodGain = 1.;
         
