@@ -27,7 +27,7 @@
     float demodGain;
  
     float rfPower;
-    double powerContext;
+    float powerContext[4];
     NSMutableData *radioPower;
 }
 
