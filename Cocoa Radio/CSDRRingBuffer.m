@@ -65,7 +65,7 @@
 
     int overflowAmount = newDataFrames - (capacityFrames - usedBuffer);
     if (overflowAmount > 0) {
-//        NSLog(@"Ring buffer overflow");
+        NSLog(@"Ring buffer overflow");
     }
     
     // Do it the easy way
@@ -132,32 +132,13 @@
     // data and make it fit within the buffer.
     int capacityFrames = [data length] / sizeof(float);
     int filledFrames = (head - tail + capacityFrames) % capacityFrames;
+    float *outFloats = ioData->mBuffers[0].mData;
+    float *bufferFloats = [data mutableBytes];
 
-    if (filledFrames < nFrames) {
-        NSLog(@"Buffer underflow");
-    }
-    
     // DTrace it
     if (COCOARADIOAUDIO_RINGBUFFEREMPTY_ENABLED()) {
         COCOARADIOAUDIO_RINGBUFFEREMPTY(nFrames, head, tail);
     }
-    
-    // Try doing this the lame (read: easy) way
-    float *outFloats = ioData->mBuffers[0].mData;
-    float *bufferFloats = [data mutableBytes];
-    for (int i = 0; i < nFrames ; i++) {
-        // Read the value from the tail into the buffer
-        if (tail == head) {
-            outFloats[i] = 0;
-            tail--;
-        } else {
-            outFloats[i] = bufferFloats[tail];
-        }
-        tail = (tail + 1) % capacityFrames;
-    }
-    
-    [lock unlock];
-    return;
     
     int underrunFrames = nFrames - filledFrames;
     if (underrunFrames > 0) {
@@ -220,32 +201,13 @@
     // data and make it fit within the buffer.
     int capacityFrames = [data length] / sizeof(float);
     int filledFrames = (head - tail + capacityFrames) % capacityFrames;
-    
-    if (filledFrames < nFrames) {
-        NSLog(@"Buffer underflow");
-    }
+    float *outFloats = [inputData mutableBytes];
+    float *bufferFloats = [data mutableBytes];
     
     // DTrace it
     if (COCOARADIOAUDIO_RINGBUFFEREMPTY_ENABLED()) {
         COCOARADIOAUDIO_RINGBUFFEREMPTY(nFrames, head, tail);
     }
-    
-    // Try doing this the lame (read: easy) way
-    float *outFloats = [inputData mutableBytes];
-    float *bufferFloats = [data mutableBytes];
-    for (int i = 0; i < nFrames ; i++) {
-        // Read the value from the tail into the buffer
-        if (tail == head) {
-            outFloats[i] = 0;
-            tail--;
-        } else {
-            outFloats[i] = bufferFloats[tail];
-        }
-        tail = (tail + 1) % capacityFrames;
-    }
-    
-    [lock unlock];
-    return;
     
     int underrunFrames = nFrames - filledFrames;
     if (underrunFrames > 0) {
