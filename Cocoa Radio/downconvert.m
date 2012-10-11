@@ -377,7 +377,7 @@ void getPower(NSDictionary *input, NSMutableData *output, float context[4], doub
     complexInput.imagp = (float *)imagSamples;
     
     float *outSamples = [output mutableBytes];
-    float tempSamples[length];
+//    float tempSamples[length];
 
 #ifdef ACCELERATE_POWER
     float *tempInput  = malloc((length + 2) * sizeof(float));
