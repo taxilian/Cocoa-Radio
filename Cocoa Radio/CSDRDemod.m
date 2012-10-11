@@ -277,7 +277,7 @@ int gcd(int a, int b) {
     filtered = [IFFilter filterDict:baseBand];
 
     // Get an array of signal power levels for squelch
-    getPower(filtered, radioPower, &powerContext, .0001);
+    getPower(filtered, radioPower, powerContext, .0001);
     
     // Quadrature demodulation
     float dGain = demodGain + (self.rfSampleRate / (2 * M_PI * IFFilter.bandwidth));
@@ -326,7 +326,7 @@ int gcd(int a, int b) {
 
 - (float)ifMinBandwidth
 {
-    return   50000;
+    return   15000;
 }
 
 // Stereo WBFM Radio has a pilot tone at 19KHz.  It's better to
