@@ -441,8 +441,8 @@ OSStatus OutputProc(void *inRefCon,
                           &deviceFormat,
                           &size);
     
-// Create a ring buffer for the audio
-    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:self.sampleRate/8];
+// Create a ring buffer for the audio (1 second worth of data)
+    ringBuffer = [[CSDRRingBuffer alloc] initWithCapacity:self.sampleRate];
     
 // Setup the callback
     AURenderCallbackStruct output;
@@ -486,25 +486,24 @@ OSStatus OutputProc(void *inRefCon,
 
 - (void)markDiscontinuity
 {
-    NSLog(@"Marking audio discontinuity.");
+//    NSLog(@"Marking audio discontinuity.");
     discontinuity = YES;
-    [ringBuffer clear];
+//    [ringBuffer clear];
 }
 
 -(void)bufferData:(NSData *)data
 {
-    int length = [data length] / sizeof(float);
+//    int length = [data length] / sizeof(float);
     
     [ringBuffer storeData:data];
 
-    // If it's not started yet, wait until the ringbuffer is half
-    // full, then start it.
+    // If it's not started yet, wait until 1/8 of a second is available
     if (!self.running) {
-        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] - length)) {
+        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] / 8)) {
             [self start];
         }
     } else if (discontinuity) {
-        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] - length)) {
+        if ([ringBuffer fillLevel] >= ([ringBuffer capacity] / 8)) {
             discontinuity = false;
         }
     }
