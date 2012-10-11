@@ -23,12 +23,71 @@
 
 // This block size sets the frequency that the read loop runs
 // sample rate / block size = block rate
-#define BLOCKSIZE    40960
+#define BLOCKSIZE    20480
 #define FFT_SIZE      2048
 
 @implementation CSDRAppDelegate
 
 @synthesize window = _window;
+
+- (void)demodLoop
+{
+    [NSThread setThreadPriority:1.];
+    
+    do {
+        @autoreleasepool {
+            NSDictionary *complexRaw = nil;
+            NSArray *blockArray = nil;
+           
+            // Attempt to get a block to process
+            [demodCondition lock];
+                int count = (int)[demodFIFO count];
+                COCOARADIO_DEMODFIFO(count);
+
+                // If there's no data, wait on the conditional variable
+                if (count == 0) {
+                    [demodCondition wait];
+                }
+            
+                // If there's more than one block, collect all of it
+                else if (count > 1) {
+                    // Make a local copy of the FIFO
+                    blockArray = [demodFIFO copy];
+                    // and remove blocks out of the main FIFO
+                    [demodFIFO removeAllObjects];
+                    
+                // Otherwise, there's exactly one.
+                } else {
+                    complexRaw = [demodFIFO objectAtIndex:0];
+                    [demodFIFO removeObjectAtIndex:0];
+                }
+            [demodCondition unlock];
+            
+            if (blockArray) {
+                [demodulatorLock lock];
+                    for (NSDictionary *raw in blockArray) {
+                        if (raw == nil)
+                            continue;
+                        NSData *audio = [demodulator demodulateData:raw];
+                        [audioOutput bufferData:audio];
+                    }
+                [demodulatorLock unlock];
+                blockArray = nil;
+            }
+            
+            if (complexRaw) {
+                // Process the block
+                [demodulatorLock lock];
+                NSData *audio = [demodulator demodulateData:complexRaw];
+                [demodulatorLock unlock];
+                
+                // Send it to the audio device
+                [audioOutput bufferData:audio];
+                complexRaw = nil;
+            }
+        }
+    } while (true);
+}
 
 - (void)processRFBlock:(NSData *)inputData withDuration:(float)duration
 {
@@ -44,16 +103,19 @@
             return;
         }
         
+        // Derive the block size from the input (2, 1-byte samples per frame)
+        int blocksize = [inputData length] / 2;
+        
         // We need them to be floats (Real [Inphase] and Imaqinary [Quadrature])
-        NSMutableData *realData = [[NSMutableData alloc] initWithLength:sizeof(float) * BLOCKSIZE];
-        NSMutableData *imagData = [[NSMutableData alloc] initWithLength:sizeof(float) * BLOCKSIZE];
+        NSMutableData *realData = [[NSMutableData alloc] initWithLength:sizeof(float) * blocksize];
+        NSMutableData *imagData = [[NSMutableData alloc] initWithLength:sizeof(float) * blocksize];
         
         // All the vDSP routines (from the Accelerate framework)
         // need the complex data represented in a COMPLEX_SPLIT structure
         float *realp  = [realData mutableBytes];
         float *imagp  = [imagData mutableBytes];
         
-        for (int i = 0; i < BLOCKSIZE; i++) {
+        for (int i = 0; i < blocksize; i++) {
             realp[i] = (float)(resultSamples[i*2 + 0] - 127) / 128;
             imagp[i] = (float)(resultSamples[i*2 + 1] - 127) / 128;
         }
@@ -61,21 +123,18 @@
         // Process the samples for visualization with the FFT
         [fftProcessor addSamplesReal:realData imag:imagData];
         
-        // Perform all the demodulation on the demodulation queue
-        // this is basically like a dedicated thread for demod.
-        dispatch_async(demodQueue,
-        ^{
-            // This must be in a autorelease pool, otherwise the
-            // allocations will pool up.
-            @autoreleasepool {
-                NSDictionary *complexRaw = @{ @"real" : realData,
-                @"imag" : imagData };
-                
-                // Demodulate the data
-                NSData *audio = [demodulator demodulateData:complexRaw];
-                [audioOutput bufferData:audio];
-            }
-       });
+        // Perform all the demodulation on the demodulation thread
+        NSDictionary *complexRaw = @{ @"real" : realData, @"imag" : imagData };
+
+        [demodCondition lock];
+        int count = (int)[demodFIFO count];
+        if (count > 100) {
+            NSLog(@"WARNING: Demodulation isn't keeping up!");
+        } else {
+            [demodFIFO addObject:complexRaw];
+        }
+        [demodCondition signal];
+        [demodCondition unlock];
     }
 }
 
@@ -172,7 +231,8 @@
 {
 //    [self getPreferences];
     afSampleRate = 48000;
-    rfSampleRate = 2048000;
+    rfSampleRate = 1024000;
+    int blocksize = 20480;
 
     [self prepareRadioDevice];
     
@@ -182,12 +242,17 @@
     // use one second's worth of samples as the buffer capacity.
     fftProcessor = [[CSDRFFT alloc] initWithSize:FFT_SIZE];
 
-// Setup the demodulator (for now, default to WBFM)
-    demodQueue  = dispatch_queue_create("com.us.alternet.cocoaradio.demod", DISPATCH_QUEUE_SERIAL);
+// Setup the demodulation thread
+    demodFIFO = [[NSMutableArray alloc] initWithCapacity:1];
+    demodCondition = [[NSCondition alloc] init];
+    demodThread = [[NSThread alloc] initWithTarget:self selector:@selector(demodLoop) object:nil];
+    
+    // Setup the demodulator (for now, default to WBFM)
 //    [self.demodulatorSelector setStringValue:@"WBFM"];
 //    [self setDemodulationScheme:@"WBFM"];
 
     // Create a new demodulator
+    demodulatorLock = [[NSLock alloc] init];
     CSDRDemod *newDemodulator = [CSDRDemod demodulatorWithScheme:@"WBFM"];
     newDemodulator.rfSampleRate = rfSampleRate;
     newDemodulator.afSampleRate = afSampleRate;
@@ -237,8 +302,10 @@
         CSDRAppDelegate *delegate = self;
         [delegate processRFBlock:resultData withDuration:duration];};
     [device resetEndpoints];
-    [device readAsynchLength:BLOCKSIZE * 2
+    [device readAsynchLength:blocksize * 2
                    withBlock:block];
+    
+    [demodThread start];
     
 // Setup a timer to set needs redisplay on all views
     viewTimer = [NSTimer timerWithTimeInterval:(1.0f/60.0f) target:self selector:@selector(animationTimer:) userInfo:nil repeats:YES];
@@ -288,9 +355,9 @@
 
 - (IBAction)showProperties:(id)sender
 {
-    NSBundle *mainBundle = [NSBundle mainBundle];
+//    NSBundle *mainBundle = [NSBundle mainBundle];
 
-    NSDictionary *options = nil;
+//    NSDictionary *options = nil;
 //    NSArray *objects = [mainBundle loadNibNamed:@"preferences"
 //                                          owner:self
 //                                        options:options];
@@ -388,10 +455,10 @@
     [self changeIFbandwidth:self.ifBandwidthSlider];
     [self changeAFbandwidth:self.afBandwidthSlider];
     
-    // Change the demodulator "atomically"
-    dispatch_sync(demodQueue, ^{
-        demodulator = newDemodulator;
-    });
+    // Change the demodulator atomically
+    [demodulatorLock lock];
+    demodulator = newDemodulator;
+    [demodulatorLock unlock];
 
     [audioOutput discontinuity];
 }

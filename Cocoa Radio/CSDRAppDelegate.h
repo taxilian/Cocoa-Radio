@@ -31,9 +31,14 @@
     
     // These classes are the audio output device and the SDR algorithm
     CSDRAudioOutput *audioOutput;
-    CSDRDemod *demodulator;
     NSString *_demodulationScheme;
-    dispatch_queue_t demodQueue;
+
+    NSLock *demodulatorLock;
+    CSDRDemod *demodulator;
+
+    NSMutableArray *demodFIFO;
+    NSCondition *demodCondition;
+    NSThread *demodThread;
     
     // View helpers
     CSDRFFT *fftProcessor;
