@@ -493,7 +493,7 @@
 		3C27C50315813348001FD108 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = "Cocoa Radio/Cocoa Radio.entitlements";
 				CODE_SIGN_IDENTITY = "";
@@ -510,7 +510,7 @@
 		3C27C50415813348001FD108 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = "Cocoa Radio/Cocoa Radio.entitlements";
 				CODE_SIGN_IDENTITY = "";
