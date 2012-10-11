@@ -18,6 +18,8 @@
 @synthesize currentLine;
 @synthesize textureID;
 @synthesize tuningValue;
+@synthesize sampleRate;
+@synthesize sliderValue;
 
 void
 rainbow(float pixel[4], float value)

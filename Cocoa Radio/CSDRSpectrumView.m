@@ -19,6 +19,8 @@
 
 @implementation CSDRSpectrumView
 
+@synthesize nativePixelsInGraph;
+
 #pragma mark -
 #pragma mark Init and bookkeeping methods
 + (NSOpenGLPixelFormat *)defaultPixelFormat
