@@ -302,7 +302,7 @@ rainbow(float pixel[4], float value)
     
     tuningValue = tunedFreq;
     
-    tunedFreq += LO;
+    tunedFreq += (LO * 1000000);
     [[self appDelegate] setTuningValue:tunedFreq / 1000000];
     
 }
@@ -319,7 +319,7 @@ rainbow(float pixel[4], float value)
     
     tuningValue = tunedFreq;
 
-    tunedFreq += LO;
+    tunedFreq += (LO * 1000000);
     [[self appDelegate] setTuningValue:tunedFreq / 1000000];
 
     return;

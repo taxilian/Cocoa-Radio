@@ -271,8 +271,8 @@
     [self changeAFbandwidth:self.afBandwidthSlider];
 
 // Apply some additional preferences now that we're ready
-    [self setLoValue:144.390];
-    [self setTuningValue:0.];
+    [self setLoValue:144.190];
+    [self setTuningValue:144.390];
     [self setBottomValue:-1.];
     [self setRange:3.];
     [self setAverage:16];
@@ -373,7 +373,8 @@
 
 - (float)tuningValue
 {
-    return [demodulator centerFreq] / 1000.;
+    float deviceFreq = [device centerFreq] / 1000000.;
+    return [demodulator centerFreq] / 1000000. + deviceFreq;
 }
 
 - (float)loValue
@@ -386,13 +387,21 @@
 {
     [device setCenterFreq:(newLoValue * 1000000)];
     [audioOutput markDiscontinuity];
+    
+    [self setTuningValue:[demodulator centerFreq] / 1000000. + newLoValue];
 }
 
 // Tuning value provided in MHz
 - (void)setTuningValue:(float)newTuningValue
 {
+    float deviceFreq  = [device centerFreq] / 1000000.;
+    float demodCenter = newTuningValue - deviceFreq;
+
     // Tuning value expected is Hz.
-    [demodulator setCenterFreq:newTuningValue * 1000000];
+    [demodulator setCenterFreq:demodCenter * 1000000];
+    
+    // Update the waterfall
+    [self.waterfallView setTuningValue:demodCenter];
     
     return;
 }
