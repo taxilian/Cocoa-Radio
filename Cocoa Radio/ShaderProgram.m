@@ -83,7 +83,7 @@
 		return nil;
 	}
 	
-	NSLog(@"Shader Loaded, Compiled and Linked.");
+//	NSLog(@"Shader Loaded, Compiled and Linked.");
 
 	return self;
 }
