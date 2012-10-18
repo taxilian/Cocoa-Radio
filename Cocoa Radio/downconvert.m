@@ -349,8 +349,8 @@ void removeDC(NSMutableData *data, double *average, double alpha)
     int length = [data length] / sizeof(float);
     float *realSamples = [data mutableBytes];
 
-    // Bootstrap DC offset correction
-    if (isnan(*average)) {
+    // Bootstrap DC offset correction and handle bad floats
+    if (!isfinite(*average)) {
         *average = realSamples[0];
     }
     
