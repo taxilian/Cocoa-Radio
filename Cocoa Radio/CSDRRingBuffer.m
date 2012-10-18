@@ -25,7 +25,7 @@
         data = [[NSMutableData alloc] initWithLength:cap * sizeof(float)];
         tail = head = 0;
         
-        NSLog(@"Created a ring buffer with %ld elements.", cap);
+//        NSLog(@"Created a ring buffer with %ld elements.", cap);
     }
     
     return self;
