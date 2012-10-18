@@ -247,28 +247,10 @@
     demodCondition = [[NSCondition alloc] init];
     demodThread = [[NSThread alloc] initWithTarget:self selector:@selector(demodLoop) object:nil];
     
-    // Setup the demodulator (for now, default to WBFM)
-//    [self.demodulatorSelector setStringValue:@"WBFM"];
-//    [self setDemodulationScheme:@"WBFM"];
-
-    // Create a new demodulator
+// Create a new demodulator
     demodulatorLock = [[NSLock alloc] init];
-    CSDRDemod *newDemodulator = [CSDRDemod demodulatorWithScheme:@"WBFM"];
-    newDemodulator.rfSampleRate = rfSampleRate;
-    newDemodulator.afSampleRate = afSampleRate;
-    demodulator = newDemodulator;
-    
-    // Setup the endpoints on the slider
-    self.ifBandwidthSlider.maxValue = newDemodulator.ifMaxBandwidth;
-    self.ifBandwidthSlider.minValue = newDemodulator.ifMinBandwidth;
-    self.afBandwidthSlider.maxValue = newDemodulator.afMaxBandwidth;
-    self.afBandwidthSlider.minValue = newDemodulator.afMinBandwidth;
-    
-    // Setup the defaults on the slider
-    self.ifBandwidthSlider.floatValue = newDemodulator.ifBandwidth;
-    self.afBandwidthSlider.floatValue = newDemodulator.afBandwidth;
-    [self changeIFbandwidth:self.ifBandwidthSlider];
-    [self changeAFbandwidth:self.afBandwidthSlider];
+    [self setDemodulationScheme:@"WBFM"];
+    [self.demodulatorSelector setStringValue:@"WBFM"];
 
 // Apply some additional preferences now that we're ready
     [self setLoValue:144.190];
@@ -331,19 +313,21 @@
     
     // Update the power level
     float rfPower = demodulator.rfPower;
-    if (rfPower > self.powerLevel.maxValue) {
-        self.powerLevel.maxValue = rfPower;
-        self.powerLevel.warningValue = rfPower;
-        self.squelch.maxValue = rfPower;
+    if (isnormal(rfPower)) {
+        if (rfPower > self.powerLevel.maxValue) {
+            self.powerLevel.maxValue = rfPower;
+            self.powerLevel.warningValue = rfPower;
+            self.squelch.maxValue = rfPower;
+        }
+        
+        if (rfPower < self.powerLevel.minValue) {
+            self.powerLevel.minValue = rfPower;
+            self.squelch.minValue = rfPower;
+        }
+        
+        [self.powerLevel setFloatValue:demodulator.rfPower];
     }
     
-    if (rfPower < self.powerLevel.minValue) {
-        self.powerLevel.minValue = rfPower;
-        self.squelch.minValue = rfPower;
-    }
-    
-    [self.powerLevel setFloatValue:demodulator.rfPower];
-
     // Update the buffer level
     float buffLevel = audioOutput.ringBuffer.fillLevel;
     bufferAverage = (bufferAverage * .9) + (buffLevel * .1);
@@ -441,11 +425,8 @@
 
 - (void)setDemodulationScheme:(NSString *)demodulationScheme
 {
-    NSLog(@"Change scheme attempted.");
-    return;
+//    NSLog(@"Change scheme attempted.");
     _demodulationScheme = demodulationScheme;
-    
-    return;
     
     // Create a new demodulator
     CSDRDemod *newDemodulator = [CSDRDemod demodulatorWithScheme:demodulationScheme];
