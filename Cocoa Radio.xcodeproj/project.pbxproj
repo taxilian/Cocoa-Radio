@@ -26,6 +26,8 @@
 		3C4FDB0315ED611A00D4B3AD /* CSDRResampler.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDB0215ED611A00D4B3AD /* CSDRResampler.m */; };
 		3C4FDB0615ED616400D4B3AD /* CSDRFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C4FDB0515ED616300D4B3AD /* CSDRFilter.m */; };
 		3C5C0EE515899F0800A2EB52 /* CSDRSpectrumView.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */; };
+		3C68163A162DCA2400ED8372 /* CSDRDemodWBFM.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C681639162DCA2400ED8372 /* CSDRDemodWBFM.m */; };
+		3C68163D162DCA7A00ED8372 /* CSDRDemodNBFM.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C68163C162DCA7A00ED8372 /* CSDRDemodNBFM.m */; };
 		3C75F1D415929F990071DE3F /* spectrumShader.vert in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1D215929F560071DE3F /* spectrumShader.vert */; };
 		3C75F1DF159393700071DE3F /* ShaderProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C75F1DE159393700071DE3F /* ShaderProgram.m */; };
 		3C75F1E21593C88E0071DE3F /* spectrumShader.frag in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C75F1E01593C7A90071DE3F /* spectrumShader.frag */; };
@@ -38,6 +40,7 @@
 		3C85B57F15A649E300803A7B /* NetworkSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C85B57D15A649E300803A7B /* NetworkSession.m */; };
 		3C9DCD2815EEBE7B0032EDD9 /* CSDRFFT.m in Sources */ = {isa = PBXBuildFile; fileRef = 3C9DCD2715EEBE7B0032EDD9 /* CSDRFFT.m */; };
 		3CAC559E15D16F7C00FDFF2A /* README in Resources */ = {isa = PBXBuildFile; fileRef = 3CAC559D15D16F7C00FDFF2A /* README */; };
+		3CADF1C4162C825E00B9FECC /* CSDRDemodAM.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CADF1C3162C825E00B9FECC /* CSDRDemodAM.m */; };
 		3CBA547C1606D02500CC706C /* rtl-sdr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3C44EA9816062BB700CF8BFC /* rtl-sdr.framework */; };
 		3CE31D6D15F013DC00F0123B /* CSDRAudioDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CE31D6C15F013DB00F0123B /* CSDRAudioDevice.m */; };
 		3CE31DB315F12E3800F0123B /* CSDRRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 3CE31DB215F12E3800F0123B /* CSDRRingBuffer.m */; };
@@ -115,6 +118,10 @@
 		3C4FDB0515ED616300D4B3AD /* CSDRFilter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRFilter.m; sourceTree = "<group>"; };
 		3C5C0EE315899F0800A2EB52 /* CSDRSpectrumView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = CSDRSpectrumView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		3C5C0EE415899F0800A2EB52 /* CSDRSpectrumView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = CSDRSpectrumView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		3C681638162DCA2400ED8372 /* CSDRDemodWBFM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRDemodWBFM.h; sourceTree = "<group>"; };
+		3C681639162DCA2400ED8372 /* CSDRDemodWBFM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRDemodWBFM.m; sourceTree = "<group>"; };
+		3C68163B162DCA7A00ED8372 /* CSDRDemodNBFM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRDemodNBFM.h; sourceTree = "<group>"; };
+		3C68163C162DCA7A00ED8372 /* CSDRDemodNBFM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRDemodNBFM.m; sourceTree = "<group>"; };
 		3C75F1D215929F560071DE3F /* spectrumShader.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = spectrumShader.vert; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		3C75F1D515938B860071DE3F /* waterfallShader.ogl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = waterfallShader.ogl; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		3C75F1DD159393700071DE3F /* ShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ShaderProgram.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -130,6 +137,8 @@
 		3C85B57D15A649E300803A7B /* NetworkSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = NetworkSession.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		3C9DCD2715EEBE7B0032EDD9 /* CSDRFFT.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRFFT.m; sourceTree = "<group>"; };
 		3CAC559D15D16F7C00FDFF2A /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README; path = ../README; sourceTree = "<group>"; };
+		3CADF1C2162C825E00B9FECC /* CSDRDemodAM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRDemodAM.h; sourceTree = "<group>"; };
+		3CADF1C3162C825E00B9FECC /* CSDRDemodAM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRDemodAM.m; sourceTree = "<group>"; };
 		3CC633881603B0560061DD95 /* CSDRFFT.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRFFT.h; sourceTree = "<group>"; };
 		3CE31D6B15F013DB00F0123B /* CSDRAudioDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CSDRAudioDevice.h; sourceTree = "<group>"; };
 		3CE31D6C15F013DB00F0123B /* CSDRAudioDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CSDRAudioDevice.m; sourceTree = "<group>"; };
@@ -168,8 +177,6 @@
 				3C4FDB0515ED616300D4B3AD /* CSDRFilter.m */,
 				3C4FDB0115ED611A00D4B3AD /* CSDRResampler.h */,
 				3C4FDB0215ED611A00D4B3AD /* CSDRResampler.m */,
-				3C4FDAFE15ED60B900D4B3AD /* CSDRDemod.h */,
-				3C4FDAFF15ED60B900D4B3AD /* CSDRDemod.m */,
 			);
 			name = "DSP Routines";
 			sourceTree = "<group>";
@@ -222,6 +229,7 @@
 			children = (
 				3C7CAAEB15BDA01900E78D83 /* Audio */,
 				3C85B57415A632C400803A7B /* Network */,
+				3C68163E162DCAEC00ED8372 /* Demodulators */,
 				3C06549115990681001A9CB7 /* DSP Routines */,
 				3C27C51A15816B2A001FD108 /* Views */,
 				3C27C50F158153B5001FD108 /* Cocoa Radio.entitlements */,
@@ -282,6 +290,21 @@
 				3C44EA9816062BB700CF8BFC /* rtl-sdr.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3C68163E162DCAEC00ED8372 /* Demodulators */ = {
+			isa = PBXGroup;
+			children = (
+				3C4FDAFE15ED60B900D4B3AD /* CSDRDemod.h */,
+				3C4FDAFF15ED60B900D4B3AD /* CSDRDemod.m */,
+				3C68163B162DCA7A00ED8372 /* CSDRDemodNBFM.h */,
+				3C68163C162DCA7A00ED8372 /* CSDRDemodNBFM.m */,
+				3C681638162DCA2400ED8372 /* CSDRDemodWBFM.h */,
+				3C681639162DCA2400ED8372 /* CSDRDemodWBFM.m */,
+				3CADF1C2162C825E00B9FECC /* CSDRDemodAM.h */,
+				3CADF1C3162C825E00B9FECC /* CSDRDemodAM.m */,
+			);
+			name = Demodulators;
 			sourceTree = "<group>";
 		};
 		3C7CAAEB15BDA01900E78D83 /* Audio */ = {
@@ -410,6 +433,9 @@
 				3CE31D6D15F013DC00F0123B /* CSDRAudioDevice.m in Sources */,
 				3CE31DB315F12E3800F0123B /* CSDRRingBuffer.m in Sources */,
 				3CE31DB515F130E500F0123B /* audioprobes.d in Sources */,
+				3CADF1C4162C825E00B9FECC /* CSDRDemodAM.m in Sources */,
+				3C68163A162DCA2400ED8372 /* CSDRDemodWBFM.m in Sources */,
+				3C68163D162DCA7A00ED8372 /* CSDRDemodNBFM.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
