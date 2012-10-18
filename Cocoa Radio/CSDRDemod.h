@@ -60,9 +60,3 @@
 + (CSDRDemod *)demodulatorWithScheme:(NSString *)scheme;
 
 @end
-
-@interface CSDRDemodWBFM : CSDRDemod
-@end
-
-@interface CSDRDemodNBFM : CSDRDemod
-@end
