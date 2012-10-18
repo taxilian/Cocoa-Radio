@@ -2,13 +2,13 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="8.00">
 	<data>
 		<int key="IBDocument.SystemTarget">1070</int>
-		<string key="IBDocument.SystemVersion">12C54</string>
-		<string key="IBDocument.InterfaceBuilderVersion">2840</string>
+		<string key="IBDocument.SystemVersion">12C60</string>
+		<string key="IBDocument.InterfaceBuilderVersion">2843</string>
 		<string key="IBDocument.AppKitVersion">1187.34</string>
 		<string key="IBDocument.HIToolboxVersion">625.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">2840</string>
+			<string key="NS.object.0">2843</string>
 		</object>
 		<array key="IBDocument.IntegratedClassDependencies">
 			<string>IBNSLayoutConstraint</string>
@@ -988,9 +988,6 @@
 									<string>NBFM</string>
 									<string>WBFM</string>
 									<string>AM</string>
-									<string>USB</string>
-									<string>LSB</string>
-									<string>CW</string>
 								</array>
 								<reference key="NSDelegate" ref="898065449"/>
 								<object class="NSComboTableView" key="NSTableView" id="555745931">
@@ -5290,9 +5287,6 @@
 					<string>NBFM</string>
 					<string>WBFM</string>
 					<string>AM</string>
-					<string>USB</string>
-					<string>LSB</string>
-					<string>CW</string>
 				</array>
 				<string key="965.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="969.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
