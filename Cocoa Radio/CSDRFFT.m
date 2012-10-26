@@ -70,14 +70,9 @@
         double real = realBuffer[i] / counter;
         double imag = imagBuffer[i] / counter;
         
-//        real = (double)i / size;
-//        imag = (double)(size - i) / size;
-        
         // Compute the magnitude and put it in the mag array
         magValues[i] = sqrt((real * real) + (imag * imag));
         magValues[i] = log10(magValues[i]);
-        
-//        magValues[i] = (float)i / (float)size;
     }
 
     if (COCOARADIO_FFTCOUNTER_ENABLED()) {
@@ -194,12 +189,6 @@
     
     // Perform the FFT
     vDSP_fft_zop(setup, &input, 1, &output, 1, log2n, FFT_FORWARD );
-
-//    int width = [inDict[@"real"] length] / sizeof(float);
-//    for (int i = 0; i < width; i++) {
-//        result.realp[i] = (float)i / (float)width;
-//        result.imagp[i] = (float)(width-i) / (float)width;
-//    }
 }
 
 - (void)convertFFTandAccumulateReal:(NSMutableData *)real
@@ -208,33 +197,15 @@
     float *realData = [real mutableBytes];
     float *imagData = [imag mutableBytes];
     
-//    for (int i = 0; i < size; i++) {
-//        realData[i] = (float)i / (float)size;
-//        imagData[i] = (float)(size-i) / (float)size;
-//    }
-    
-    // The format of the frequency data is:
-    
-    //  Positive frequencies  | Negative frequencies
-    //  [DC][1][2]...[n/2][NY]|[n/2]...[2][1]  real array
-    //  [DC][1][2]...[n/2][NY]|[n/2]...[2][1]  imag array
-    
-    // We want the order to be negative frequencies first (descending)
-    // And positive frequencies last (ascending)
-    
     // Accumulate this data with what came before it, and re-order the values
     for (int i = 0; i <= (size/2); i++) {
         realBuffer[i] += realData[i + (size/2)];
         imagBuffer[i] += imagData[i + (size/2)];
-//        realBuffer[i] = realData[i + (size/2)];
-//        imagBuffer[i] = imagData[i + (size/2)];
     }
     
     for (int i = 0; i <  (size/2); i++) {
         realBuffer[i + (size/2)] += realData[i];
         imagBuffer[i + (size/2)] += imagData[i];
-//        realBuffer[i + (size/2)] = realData[i];
-//        imagBuffer[i + (size/2)] = imagData[i];
     }
 }
 
