@@ -17,12 +17,12 @@
 {
     self = [super initWithRFRate:rfRate AFRate:afRate];
     if (self != nil) {
-        self.ifBandwidth  = 25000;
-        self.ifSkirtWidth = 10000;
+        self.ifBandwidth  = 11500;
+        self.ifSkirtWidth =  5000;
         IFFilter.gain = 5.;
         
         AFFilter.bandwidth  = 18000;
-        AFFilter.skirtWidth = 10000;
+        AFFilter.skirtWidth =  5000;
         
         demodGain = 1.;
         
