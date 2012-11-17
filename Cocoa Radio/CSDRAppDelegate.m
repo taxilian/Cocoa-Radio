@@ -352,6 +352,11 @@
     self.demodulator.squelch = [sender floatValue];
 }
 
+- (IBAction)loValueSliderChanged:(NSSlider *)sender
+{
+    [self setLoValue:[sender floatValue]];
+}
+
 #pragma mark -
 #pragma mark Getters and Setters
 
@@ -371,6 +376,8 @@
 {
     [device setCenterFreq:(newLoValue * 1000000)];
     [audioOutput markDiscontinuity];
+    
+    self.loValueSlider.value = [NSNumber numberWithFloat:newLoValue];
     
     [self setTuningValue:[demodulator centerFreq] / 1000000. + newLoValue];
 }

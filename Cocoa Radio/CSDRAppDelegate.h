@@ -78,6 +78,9 @@
 @property (readwrite) float tuningValue;
 @property (readwrite) float loValue;
 
+@property (readwrite) IBOutlet NSSlider *loValueSlider;
+- (IBAction)loValueSliderChanged:(NSSlider *)sender;
+
 @property (readonly)  NSData *fftData;
 
 @end
